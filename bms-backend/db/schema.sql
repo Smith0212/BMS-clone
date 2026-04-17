@@ -13,31 +13,22 @@ CREATE TABLE IF NOT EXISTS tbl_credentials (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Users (customers)
+-- Users (customers only — no role, no social login)
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS tbl_users (
-    id                 BIGSERIAL PRIMARY KEY,
-    user_role          VARCHAR(20)  CHECK (user_role IN ('customer')) DEFAULT 'customer',
-    profile_image      TEXT,
-    first_name         VARCHAR(255),
-    last_name          VARCHAR(255),
-    signup_type        VARCHAR(1)   CHECK (signup_type IN ('s','g','f','a')) DEFAULT 's',
-    social_id          TEXT,
-    email              VARCHAR(255),
-    country_code       VARCHAR(6),
-    phone              VARCHAR(20),
-    password           TEXT,
-    dob                DATE,
-    city               VARCHAR(255),
-    state              VARCHAR(255),
-    country            VARCHAR(255),
-    is_verified        BOOLEAN      DEFAULT FALSE,
-    forgot_otp_verified BOOLEAN     DEFAULT FALSE,
-    step               INTEGER      DEFAULT 1,
-    is_active          BOOLEAN      NOT NULL DEFAULT TRUE,
-    is_deleted         BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    updated_at         TIMESTAMPTZ  NOT NULL DEFAULT now()
+    id            BIGSERIAL PRIMARY KEY,
+    first_name    VARCHAR(255),
+    last_name     VARCHAR(255),
+    email         VARCHAR(255) UNIQUE,
+    phone         VARCHAR(20),
+    password      TEXT,
+    profile_image TEXT,
+    city          VARCHAR(255),
+    is_verified   BOOLEAN      NOT NULL DEFAULT FALSE,
+    is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
+    is_deleted    BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -55,23 +46,16 @@ CREATE TABLE IF NOT EXISTS tbl_otp (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Device / session info
+-- Session tokens (one per user)
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS tbl_device_info (
-    id          BIGSERIAL PRIMARY KEY,
-    user_id     BIGINT      REFERENCES tbl_users(id) ON DELETE CASCADE,
-    device_type VARCHAR(2)  CHECK (device_type IN ('A','I','W')) DEFAULT 'W',
-    device_name VARCHAR(64),
-    os_version  VARCHAR(8),
-    app_version VARCHAR(8),
-    ip          VARCHAR(45),
-    user_token  TEXT,
-    fcm_token   TEXT,
-    timezone    VARCHAR(32),
-    is_active   BOOLEAN     DEFAULT TRUE,
-    is_deleted  BOOLEAN     DEFAULT FALSE,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    id         BIGSERIAL PRIMARY KEY,
+    user_id    BIGINT      REFERENCES tbl_users(id) ON DELETE CASCADE,
+    user_token TEXT,
+    ip         VARCHAR(45),
+    is_active  BOOLEAN     DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -232,7 +216,6 @@ CREATE TABLE IF NOT EXISTS tbl_booking_seats (
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Payments (dummy gateway)
--- booking_id is nullable — set after booking is confirmed
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS tbl_payments (
     id                  BIGSERIAL PRIMARY KEY,

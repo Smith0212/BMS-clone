@@ -1,72 +1,125 @@
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 import useBookingStore from '@/store/useBookingStore';
-import { generateSeatMap } from '@/utils/seatHelpers';
-import SeatGrid from '@/components/SeatGrid';
+import SeatGrid, { transformSeatMap } from '@/components/SeatGrid';
+import { bmsApi } from '@/lib/bmsApi';
 
-export default function BookSeatsPage({ params }) {
-    const router = useRouter();
-    const { showInfo, selectedSeats, totalAmount } = useBookingStore();
-
-    const seatMap = useMemo(() => {
-        // Generate map deterministically based on movie, theater, date, format and time
-        if (!showInfo) return null;
-        const seedStr = `${showInfo.movieId}-${showInfo.theater}-${showInfo.date}-${showInfo.time}`;
-
-        // Hash string to int roughly
-        let seedInt = 0;
-        for (let i = 0; i < seedStr.length; i++) seedInt += seedStr.charCodeAt(i);
-
-        return generateSeatMap(seedInt.toString());
-    }, [showInfo]);
+export default function BookSeatsPage() {
+    const router                            = useRouter();
+    const { data: session }                 = useSession();
+    const { showInfo, selectedSeats, totalAmount, clearSeats, setReservedUntil } = useBookingStore();
+    const [seatMap, setSeatMap]             = useState(null);
+    const [loading, setLoading]             = useState(true);
+    const [reserving, setReserving]         = useState(false);
 
     useEffect(() => {
-        if (!showInfo) {
+        if (!showInfo?.showtimeId) {
             router.replace('/movies');
+            return;
         }
-    }, [showInfo, router]);
+        setLoading(true);
+        clearSeats();
+        bmsApi
+            .getSeatMap(showInfo.showtimeId)
+            .then((res) => {
+                if (res.code === 1) setSeatMap(transformSeatMap(res.data));
+                else toast.error('Could not load seat map');
+            })
+            .catch(() => toast.error('Failed to connect to server'))
+            .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showInfo?.showtimeId]);
 
-    if (!showInfo || !seatMap) return <div className="p-20 text-center text-white">Loading mapping...</div>;
+    const handleProceed = async () => {
+        if (selectedSeats.length === 0) {
+            toast.error('Please select at least one seat');
+            return;
+        }
 
-    const handleProceed = () => {
-        if (selectedSeats.length === 0) return;
-        router.push('/booking/payment');
+        if (!session?.user?.backendToken) {
+            toast.error('Please sign in to continue');
+            router.push(`/login?callbackUrl=/movies/${showInfo?.movieId}/book`);
+            return;
+        }
+
+        setReserving(true);
+        try {
+            const seatIds = selectedSeats.map((s) => s.id);
+            const res = await bmsApi.reserveSeats(
+                { showtime_id: showInfo.showtimeId, seat_ids: seatIds },
+                session.user.backendToken
+            );
+
+            if (res.code === 1) {
+                setReservedUntil(res.data.reserved_until);
+                router.push('/booking/payment');
+            } else if (res.code === 6) {
+                toast.error('Some seats were just taken — please reselect');
+                // Refresh seat map
+                const fresh = await bmsApi.getSeatMap(showInfo.showtimeId);
+                if (fresh.code === 1) setSeatMap(transformSeatMap(fresh.data));
+                clearSeats();
+            } else {
+                toast.error(res.message || 'Could not reserve seats');
+            }
+        } catch {
+            toast.error('Failed to reserve seats — try again');
+        } finally {
+            setReserving(false);
+        }
     };
+
+    if (!showInfo) return null;
 
     return (
         <div className="w-full flex flex-col min-h-[calc(100vh-64px)] overflow-hidden">
-            {/* Top Header info */}
-            <div className="bg-gray-900 border-b border-gray-800 px-4 py-4 sticky top-0 z-10 w-full flex-shrink-0">
+            {/* Header */}
+            <div className="bg-gray-900 border-b border-gray-800 px-4 py-4 sticky top-0 z-10 w-full">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div>
                         <h1 className="text-xl font-bold text-white leading-tight">{showInfo.movieTitle}</h1>
                         <p className="text-sm text-gray-400 mt-1">
-                            {showInfo.theater} | {showInfo.date} | {showInfo.time} | {showInfo.format}
+                            {showInfo.theater} &nbsp;|&nbsp; {showInfo.displayDate} &nbsp;|&nbsp; {showInfo.time} &nbsp;|&nbsp; {showInfo.format}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* Main Seat area */}
+            {/* Seat area */}
             <div className="flex-1 w-full bg-gray-950 px-4 py-8 overflow-y-auto pb-32">
-                <SeatGrid seatMap={seatMap} />
+                {loading ? (
+                    <div className="flex items-center justify-center h-64 text-gray-400">
+                        Loading seats…
+                    </div>
+                ) : (
+                    <SeatGrid seatMap={seatMap} />
+                )}
             </div>
 
-            {/* Sticky Bottom Bar */}
+            {/* Sticky bottom bar */}
             {selectedSeats.length > 0 && (
-                <div className="fixed bottom-0 inset-x-0 bg-gray-900 border-t border-gray-800 p-4 shadow-2xl z-50 transform transition-transform duration-300">
+                <div className="fixed bottom-0 inset-x-0 bg-gray-900 border-t border-gray-800 p-4 shadow-2xl z-50">
                     <div className="max-w-7xl mx-auto flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-sm text-gray-400">{selectedSeats.length} Ticket(s) selected</span>
+                            <span className="text-sm text-gray-400">
+                                {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''} selected
+                                &nbsp;·&nbsp;
+                                <span className="text-gray-300">
+                                    {selectedSeats.map((s) => s.label).join(', ')}
+                                </span>
+                            </span>
                             <span className="text-xl font-bold text-primary-500">₹{totalAmount}</span>
                         </div>
                         <button
                             onClick={handleProceed}
-                            className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors shadow-lg shadow-primary-500/30"
+                            disabled={reserving}
+                            className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors shadow-lg shadow-primary-500/30 disabled:opacity-60 disabled:cursor-wait"
                         >
-                            Proceed &rarr;
+                            {reserving ? 'Reserving…' : 'Proceed →'}
                         </button>
                     </div>
                 </div>

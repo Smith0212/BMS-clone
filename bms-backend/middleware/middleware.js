@@ -116,11 +116,11 @@ const checkToken = async function (req, res, next) {
 
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
-const sendOTP = async (email, action = 'signup', user_role = 'customer') => {
+const sendOTP = async (email, action = 'signup') => {
     const userResult = await pool.query(
         `SELECT id, first_name, last_name FROM tbl_users
-         WHERE email = $1 AND user_role = $2 AND is_deleted = FALSE`,
-        [email, user_role]
+         WHERE email = $1 AND is_deleted = FALSE`,
+        [email]
     );
     if (userResult.rows.length === 0) throw new Error('User not found');
 
@@ -139,16 +139,17 @@ const sendOTP = async (email, action = 'signup', user_role = 'customer') => {
 
     const otpRow = otpResult.rows[0];
 
+    // Email is best-effort — never block signup/forgot-password if SMTP is unconfigured
     const emailSubject = action === 'signup'
         ? 'Welcome to BookMyShow — Verify Your Email'
         : 'BookMyShow — Password Reset OTP';
 
-    await sendIndiaMail({
+    sendIndiaMail({
         from: process.env.EMAIL || process.env.EMAIL_SMTP_USERNAME,
         to: email,
         subject: emailSubject,
         html: getOTPEmailTemplate(otp, userName, action),
-    });
+    }).catch(err => console.warn('OTP email skipped (SMTP not configured):', err?.error || err?.message));
 
     return {
         user_id: otpRow.user_id,

@@ -2,8 +2,7 @@ const pool         = require('../../../../config/database');
 const responseCode = require('../../../../config/responseCode');
 const bcrypt       = require('bcrypt');
 const jwt          = require('jsonwebtoken');
-const { sendOTP }  = require('../../../../middleware/middleware');
-const common       = require('../../../../utils/common');
+const { sendOTP } = require('../../../../middleware/middleware');
 
 const user_model = {
 
@@ -12,38 +11,17 @@ const user_model = {
     // ─────────────────────────────────────────────────────────────────────────
     async signup(req) {
         try {
-            const {
-                first_name, last_name, email, password, social_id,
-                country_code, phone, signup_type = 's',
-                device_type = 'W', device_name = 'unknown',
-                os_version = 'unknown', app_version = '1.0',
-                fcm_token = 'unknown', timezone = 'UTC',
-            } = req.body;
+            const { first_name, last_name, email, password, phone } = req.body;
 
-            // Email uniqueness check
-            if (email && signup_type === 's') {
-                const { rows } = await pool.query(
-                    `SELECT id FROM tbl_users
-                     WHERE email = $1 AND user_role = 'customer' AND is_deleted = FALSE`,
-                    [email]
-                );
-                if (rows.length > 0) {
-                    return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'email_already_exists' }, data: {} };
-                }
+            const { rows: existing } = await pool.query(
+                `SELECT id FROM tbl_users WHERE email = $1 AND is_deleted = FALSE`,
+                [email]
+            );
+            if (existing.length > 0) {
+                return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'email_already_exists' }, data: {} };
             }
 
-            // Social ID uniqueness check
-            if (signup_type !== 's' && social_id) {
-                const { rows } = await pool.query(
-                    `SELECT id FROM tbl_users WHERE social_id = $1 AND signup_type = $2 AND is_deleted = FALSE`,
-                    [social_id, signup_type]
-                );
-                if (rows.length > 0) {
-                    return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'email_already_exists' }, data: {} };
-                }
-            }
-
-            const hashedPassword = signup_type === 's' ? await bcrypt.hash(password, 10) : null;
+            const hashedPassword = await bcrypt.hash(password, 10);
 
             const client = await pool.connect();
             let newUserId;
@@ -51,20 +29,16 @@ const user_model = {
                 await client.query('BEGIN');
 
                 const { rows: insertRows } = await client.query(`
-                    INSERT INTO tbl_users
-                        (first_name, last_name, email, password, country_code, phone, signup_type, social_id, user_role)
-                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'customer')
+                    INSERT INTO tbl_users (first_name, last_name, email, password, phone)
+                    VALUES ($1, $2, $3, $4, $5)
                     RETURNING id
-                `, [first_name, last_name, signup_type === 's' ? email : null,
-                    hashedPassword, country_code, phone, signup_type, social_id]);
+                `, [first_name, last_name || '', email, hashedPassword, phone || null]);
 
                 newUserId = insertRows[0].id;
 
                 await client.query(`
-                    INSERT INTO tbl_device_info
-                        (user_id, device_type, device_name, os_version, app_version, user_token, fcm_token, timezone)
-                    VALUES ($1,$2,$3,$4,$5,NULL,$6,$7)
-                `, [newUserId, device_type, device_name, os_version, app_version, fcm_token, timezone]);
+                    INSERT INTO tbl_device_info (user_id) VALUES ($1)
+                `, [newUserId]);
 
                 await client.query('COMMIT');
             } catch (err) {
@@ -74,13 +48,13 @@ const user_model = {
                 client.release();
             }
 
-            const otpData = signup_type === 's' ? await sendOTP(email, 'signup', 'customer') : null;
+            const otpData = await sendOTP(email, 'signup');
 
             return {
                 httpCode: 200,
                 code: responseCode.SUCCESS,
                 message: { keyword: 'success' },
-                data: { user_id: newUserId, ...(otpData || {}) },
+                data: { user_id: newUserId, otp: otpData.otp },
             };
         } catch (err) {
             console.error('Signup Error:', err);
@@ -116,7 +90,7 @@ const user_model = {
                 await pool.query(`UPDATE tbl_users SET is_verified = TRUE, updated_at = NOW() WHERE id = $1`, [user.id]);
             } else if (action === 'forgot') {
                 await pool.query(
-                    `UPDATE tbl_users SET is_verified = TRUE, forgot_otp_verified = TRUE, updated_at = NOW() WHERE id = $1`,
+                    `UPDATE tbl_users SET is_verified = TRUE, updated_at = NOW() WHERE id = $1`,
                     [user.id]
                 );
             }
@@ -124,16 +98,10 @@ const user_model = {
             let user_token = null;
             if (action === 'signup') {
                 user_token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET_KEY, { expiresIn: '1y' });
-
-                const { rows: devRows } = await pool.query(`SELECT id FROM tbl_device_info WHERE user_id = $1`, [user.id]);
-                if (devRows.length > 0) {
-                    await pool.query(`UPDATE tbl_device_info SET user_token = $1, updated_at = NOW() WHERE user_id = $2`, [user_token, user.id]);
-                } else {
-                    await pool.query(
-                        `INSERT INTO tbl_device_info (user_id, device_type, user_token) VALUES ($1,'W',$2)`,
-                        [user.id, user_token]
-                    );
-                }
+                await pool.query(
+                    `UPDATE tbl_device_info SET user_token = $1, updated_at = NOW() WHERE user_id = $2`,
+                    [user_token, user.id]
+                );
             }
 
             return {
@@ -153,27 +121,14 @@ const user_model = {
     // ─────────────────────────────────────────────────────────────────────────
     async login(req) {
         try {
-            const {
-                email, password, login_type = 's', social_id,
-                device_type = 'W', device_name = 'unknown',
-                os_version = 'unknown', app_version = '1.0',
-                fcm_token = 'unknown', timezone = 'UTC', ip = '',
-            } = req.body;
+            const { email, password, ip = '' } = req.body;
 
-            let userQuery, params;
-            if (login_type === 's') {
-                userQuery = `SELECT id AS user_id, email, password, is_verified, is_active, signup_type, user_role,
-                                    first_name, last_name, profile_image, country_code, phone, dob, city, state, country
-                             FROM tbl_users WHERE email = $1 AND user_role = 'customer' AND is_deleted = FALSE`;
-                params = [email];
-            } else {
-                userQuery = `SELECT id AS user_id, email, is_verified, is_active, signup_type, user_role,
-                                    first_name, last_name, profile_image
-                             FROM tbl_users WHERE social_id = $1 AND signup_type = $2 AND user_role = 'customer' AND is_deleted = FALSE`;
-                params = [social_id, login_type];
-            }
-
-            const { rows } = await pool.query(userQuery, params);
+            const { rows } = await pool.query(
+                `SELECT id AS user_id, email, password, is_verified, is_active,
+                        first_name, last_name, profile_image, phone, city
+                 FROM tbl_users WHERE email = $1 AND is_deleted = FALSE`,
+                [email]
+            );
             if (rows.length === 0) {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'user_not_found' }, data: {} };
             }
@@ -181,7 +136,7 @@ const user_model = {
             const user = rows[0];
 
             if (!user.is_verified) {
-                const otpData = await sendOTP(user.email, 'signup', 'customer');
+                const otpData = await sendOTP(user.email, 'signup');
                 return {
                     httpCode: 200,
                     code: responseCode.EMAIL_UNVERIFIED,
@@ -194,11 +149,9 @@ const user_model = {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'user_blocked_by_admin' }, data: {} };
             }
 
-            if (login_type === 's') {
-                const valid = await bcrypt.compare(password, user.password);
-                if (!valid) {
-                    return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'login_invalid_credential' }, data: {} };
-                }
+            const valid = await bcrypt.compare(password, user.password);
+            if (!valid) {
+                return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'login_invalid_credential' }, data: {} };
             }
             delete user.password;
 
@@ -206,17 +159,15 @@ const user_model = {
 
             const { rows: devRows } = await pool.query(`SELECT id FROM tbl_device_info WHERE user_id = $1`, [user.user_id]);
             if (devRows.length > 0) {
-                await pool.query(`
-                    UPDATE tbl_device_info SET
-                        device_type=$1, device_name=$2, os_version=$3, app_version=$4,
-                        user_token=$5, fcm_token=$6, timezone=$7, ip=$8, updated_at=NOW()
-                    WHERE user_id=$9
-                `, [device_type, device_name, os_version, app_version, user_token, fcm_token, timezone, ip, user.user_id]);
+                await pool.query(
+                    `UPDATE tbl_device_info SET user_token = $1, ip = $2, updated_at = NOW() WHERE user_id = $3`,
+                    [user_token, ip, user.user_id]
+                );
             } else {
-                await pool.query(`
-                    INSERT INTO tbl_device_info (user_id, device_type, device_name, os_version, app_version, user_token, fcm_token, timezone, ip)
-                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-                `, [user.user_id, device_type, device_name, os_version, app_version, user_token, fcm_token, timezone, ip]);
+                await pool.query(
+                    `INSERT INTO tbl_device_info (user_id, user_token, ip) VALUES ($1, $2, $3)`,
+                    [user.user_id, user_token, ip]
+                );
             }
 
             return {
@@ -249,7 +200,7 @@ const user_model = {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'account_inactive' }, data: {} };
             }
 
-            const otpData = await sendOTP(email, action, 'customer');
+            const otpData = await sendOTP(email, action);
             return { httpCode: 200, code: responseCode.SUCCESS, message: { keyword: 'otp_resent' }, data: { otp: otpData.otp } };
         } catch (err) {
             console.error('ResendOtp Error:', err);
@@ -275,7 +226,7 @@ const user_model = {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'account_inactive' }, data: {} };
             }
 
-            const otpData = await sendOTP(email, 'forgot', 'customer');
+            const otpData = await sendOTP(email, 'forgot');
             return { httpCode: 200, code: responseCode.SUCCESS, message: { keyword: 'forgot_password_otp_sent' }, data: { otp: otpData.otp } };
         } catch (err) {
             console.error('ForgotPassword Error:', err);
@@ -291,19 +242,16 @@ const user_model = {
             const { email, new_password } = req.body;
 
             const { rows } = await pool.query(
-                `SELECT id, forgot_otp_verified FROM tbl_users WHERE email = $1 AND is_active = TRUE AND is_deleted = FALSE`,
+                `SELECT id FROM tbl_users WHERE email = $1 AND is_active = TRUE AND is_deleted = FALSE`,
                 [email]
             );
             if (rows.length === 0) {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'user_not_found' }, data: {} };
             }
-            if (!rows[0].forgot_otp_verified) {
-                return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'forgot_otp_not_verified' }, data: {} };
-            }
 
             const hashedPassword = await bcrypt.hash(new_password, 10);
             await pool.query(
-                `UPDATE tbl_users SET password = $1, forgot_otp_verified = FALSE, updated_at = NOW() WHERE id = $2`,
+                `UPDATE tbl_users SET password = $1, updated_at = NOW() WHERE id = $2`,
                 [hashedPassword, rows[0].id]
             );
 
@@ -320,13 +268,7 @@ const user_model = {
     async logout(req) {
         try {
             const user_id = req.user_id;
-
-            const { rows } = await pool.query(`SELECT user_token FROM tbl_device_info WHERE user_id = $1`, [user_id]);
-            if (rows.length === 0 || !rows[0].user_token) {
-                return { httpCode: 200, code: responseCode.SUCCESS, message: { keyword: 'already_logged_out' }, data: { user_id } };
-            }
-
-            await pool.query(`UPDATE tbl_device_info SET user_token = NULL, fcm_token = NULL, updated_at = NOW() WHERE user_id = $1`, [user_id]);
+            await pool.query(`UPDATE tbl_device_info SET user_token = NULL, updated_at = NOW() WHERE user_id = $1`, [user_id]);
             return { httpCode: 200, code: responseCode.SUCCESS, message: { keyword: 'logout_success' }, data: { user_id } };
         } catch (err) {
             console.error('Logout Error:', err);
@@ -340,10 +282,10 @@ const user_model = {
     async getProfile(req) {
         try {
             const { rows } = await pool.query(`
-                SELECT id AS user_id, user_role, first_name, last_name, email, country_code, phone,
-                       profile_image, dob, city, state, country, signup_type, is_verified, created_at
+                SELECT id AS user_id, first_name, last_name, email, phone,
+                       profile_image, city, is_verified, created_at
                 FROM tbl_users
-                WHERE id = $1 AND user_role = 'customer' AND is_active = TRUE AND is_deleted = FALSE
+                WHERE id = $1 AND is_active = TRUE AND is_deleted = FALSE
             `, [req.user_id]);
 
             if (rows.length === 0) {
@@ -362,10 +304,10 @@ const user_model = {
     async updateProfile(req) {
         try {
             const user_id = req.user_id;
-            const { first_name, last_name, profile_image, country_code, phone, email, dob, city, state, country } = req.body;
+            const { first_name, last_name, profile_image, phone, email, city } = req.body;
 
             const { rows: userRows } = await pool.query(
-                `SELECT id FROM tbl_users WHERE id = $1 AND user_role = 'customer' AND is_active = TRUE AND is_deleted = FALSE`,
+                `SELECT id FROM tbl_users WHERE id = $1 AND is_active = TRUE AND is_deleted = FALSE`,
                 [user_id]
             );
             if (userRows.length === 0) {
@@ -387,13 +329,9 @@ const user_model = {
             if (first_name    !== undefined) { fields.push(`first_name=$${idx++}`);    values.push(first_name); }
             if (last_name     !== undefined) { fields.push(`last_name=$${idx++}`);     values.push(last_name); }
             if (profile_image !== undefined) { fields.push(`profile_image=$${idx++}`); values.push(profile_image); }
-            if (country_code  !== undefined) { fields.push(`country_code=$${idx++}`);  values.push(country_code); }
             if (phone         !== undefined) { fields.push(`phone=$${idx++}`);         values.push(phone); }
             if (email         !== undefined) { fields.push(`email=$${idx++}`);         values.push(email); }
-            if (dob           !== undefined) { fields.push(`dob=$${idx++}`);           values.push(dob || null); }
             if (city          !== undefined) { fields.push(`city=$${idx++}`);          values.push(city); }
-            if (state         !== undefined) { fields.push(`state=$${idx++}`);         values.push(state); }
-            if (country       !== undefined) { fields.push(`country=$${idx++}`);       values.push(country); }
 
             if (fields.length === 0) {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'no_fields_to_update' }, data: {} };
@@ -404,7 +342,7 @@ const user_model = {
 
             const { rows: updated } = await pool.query(
                 `UPDATE tbl_users SET ${fields.join(', ')} WHERE id=$${idx}
-                 RETURNING id AS user_id, first_name, last_name, email, country_code, phone, profile_image, dob, city, state, country`,
+                 RETURNING id AS user_id, first_name, last_name, email, phone, profile_image, city`,
                 values
             );
 
@@ -424,19 +362,14 @@ const user_model = {
             const { old_password, new_password } = req.body;
 
             const { rows } = await pool.query(
-                `SELECT id, password, signup_type FROM tbl_users WHERE id = $1 AND is_active = TRUE AND is_deleted = FALSE`,
+                `SELECT id, password FROM tbl_users WHERE id = $1 AND is_active = TRUE AND is_deleted = FALSE`,
                 [user_id]
             );
             if (rows.length === 0) {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'user_not_found' }, data: {} };
             }
 
-            const user = rows[0];
-            if (user.signup_type !== 's') {
-                return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'social_account_no_password' }, data: {} };
-            }
-
-            const isMatch = await bcrypt.compare(old_password, user.password);
+            const isMatch = await bcrypt.compare(old_password, rows[0].password);
             if (!isMatch) {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'old_password_incorrect' }, data: {} };
             }
@@ -470,7 +403,7 @@ const user_model = {
             try {
                 await client.query('BEGIN');
                 await client.query(`UPDATE tbl_users SET is_deleted=TRUE, is_active=FALSE, updated_at=NOW() WHERE id=$1`, [user_id]);
-                await client.query(`UPDATE tbl_device_info SET user_token=NULL, fcm_token=NULL WHERE user_id=$1`, [user_id]);
+                await client.query(`UPDATE tbl_device_info SET user_token=NULL WHERE user_id=$1`, [user_id]);
                 await client.query('COMMIT');
             } catch (err) {
                 await client.query('ROLLBACK');
@@ -487,18 +420,16 @@ const user_model = {
     },
 
     // ─────────────────────────────────────────────────────────────────────────
-    // GET NOTIFICATIONS
+    // NOTIFICATIONS
     // ─────────────────────────────────────────────────────────────────────────
     async getNotifications(req) {
         try {
-            const user_id = req.user_id;
             const { rows } = await pool.query(`
                 SELECT id, title, body, type, reference_id, is_read, created_at
                 FROM tbl_notifications
                 WHERE user_id = $1 AND is_deleted = FALSE
                 ORDER BY created_at DESC
-            `, [user_id]);
-
+            `, [req.user_id]);
             return { httpCode: 200, code: responseCode.SUCCESS, message: { keyword: 'notifications_found' }, data: rows };
         } catch (err) {
             console.error('GetNotifications Error:', err);
@@ -506,19 +437,13 @@ const user_model = {
         }
     },
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MARK AS READ
-    // ─────────────────────────────────────────────────────────────────────────
     async markAsRead(req) {
         try {
-            const user_id = req.user_id;
             const { notification_ids } = req.body;
-
-            await pool.query(`
-                UPDATE tbl_notifications SET is_read = TRUE, updated_at = NOW()
-                WHERE id = ANY($1::bigint[]) AND user_id = $2
-            `, [notification_ids, user_id]);
-
+            await pool.query(
+                `UPDATE tbl_notifications SET is_read = TRUE, updated_at = NOW() WHERE id = ANY($1::bigint[]) AND user_id = $2`,
+                [notification_ids, req.user_id]
+            );
             return { httpCode: 200, code: responseCode.SUCCESS, message: { keyword: 'marked_as_read' }, data: {} };
         } catch (err) {
             console.error('MarkAsRead Error:', err);
@@ -526,17 +451,12 @@ const user_model = {
         }
     },
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MARK ALL READ
-    // ─────────────────────────────────────────────────────────────────────────
     async markAllRead(req) {
         try {
-            const user_id = req.user_id;
-            await pool.query(`
-                UPDATE tbl_notifications SET is_read = TRUE, updated_at = NOW()
-                WHERE user_id = $1 AND is_deleted = FALSE
-            `, [user_id]);
-
+            await pool.query(
+                `UPDATE tbl_notifications SET is_read = TRUE, updated_at = NOW() WHERE user_id = $1 AND is_deleted = FALSE`,
+                [req.user_id]
+            );
             return { httpCode: 200, code: responseCode.SUCCESS, message: { keyword: 'all_marked_as_read' }, data: {} };
         } catch (err) {
             console.error('MarkAllRead Error:', err);

@@ -1,16 +1,78 @@
 const pool         = require('../../../../config/database');
 const responseCode = require('../../../../config/responseCode');
 
+const SHOW_TIMES = ['10:00', '13:00', '16:00', '19:00', '22:00'];
+
+// Auto-seed showtimes for a movie in a city across the next 7 days
+async function ensureShowtimesExist(tmdb_movie_id, movie_title, city_id) {
+    try {
+        // Insert showtimes for all screens in the city for the next 7 days
+        await pool.query(`
+            INSERT INTO tbl_showtimes
+                (screen_id, theater_id, tmdb_movie_id, movie_title, movie_language,
+                 show_date, show_time, show_format, price_multiplier)
+            SELECT
+                scr.id,
+                scr.theater_id,
+                $1, $2, 'English',
+                (CURRENT_DATE + n.days)::DATE,
+                t.show_time::TIME,
+                '2D',
+                1.00
+            FROM tbl_screens scr
+            JOIN tbl_theaters th ON th.id = scr.theater_id
+            CROSS JOIN (VALUES (0),(1),(2),(3),(4),(5),(6)) AS n(days)
+            CROSS JOIN (VALUES ('10:00'),('13:00'),('16:00'),('19:00'),('22:00')) AS t(show_time)
+            WHERE th.city_id = $3
+              AND scr.is_active = TRUE AND scr.is_deleted = FALSE
+              AND th.is_active = TRUE AND th.is_deleted = FALSE
+            ON CONFLICT (screen_id, show_date, show_time) DO NOTHING
+        `, [tmdb_movie_id, movie_title || 'Movie', city_id]);
+
+        // Initialize showtime_seats for any new showtimes that don't have them
+        await pool.query(`
+            INSERT INTO tbl_showtime_seats (showtime_id, seat_id, status)
+            SELECT st.id, se.id, 'available'
+            FROM tbl_showtimes st
+            JOIN tbl_seats se ON se.screen_id = st.screen_id
+            JOIN tbl_theaters th ON th.id = st.theater_id
+            WHERE st.tmdb_movie_id = $1
+              AND th.city_id = $2
+              AND se.is_active = TRUE AND se.is_deleted = FALSE
+              AND NOT EXISTS (
+                  SELECT 1 FROM tbl_showtime_seats ss
+                  WHERE ss.showtime_id = st.id AND ss.seat_id = se.id
+              )
+            ON CONFLICT (showtime_id, seat_id) DO NOTHING
+        `, [tmdb_movie_id, city_id]);
+    } catch (err) {
+        console.error('ensureShowtimesExist error:', err.message);
+    }
+}
+
 const showtime_model = {
 
     // ─────────────────────────────────────────────────────────────────────────
-    // GET SHOWTIMES — grouped by theater
+    // GET SHOWTIMES — grouped by theater; auto-creates if none exist
     // ─────────────────────────────────────────────────────────────────────────
     async getShowtimes(req) {
         try {
-            const { tmdb_movie_id, city_id, date } = req.query;
+            const { tmdb_movie_id, city_id, date, movie_title = 'Movie' } = req.query;
             if (!tmdb_movie_id || !city_id || !date) {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'no_showtimes_found' }, data: [] };
+            }
+
+            // Check if any showtimes exist for this movie/city
+            const { rows: existCheck } = await pool.query(`
+                SELECT 1 FROM tbl_showtimes st
+                JOIN tbl_theaters th ON th.id = st.theater_id
+                WHERE st.tmdb_movie_id = $1 AND th.city_id = $2
+                LIMIT 1
+            `, [tmdb_movie_id, city_id]);
+
+            // Auto-seed if needed — runs fast due to ON CONFLICT DO NOTHING
+            if (existCheck.length === 0) {
+                await ensureShowtimesExist(parseInt(tmdb_movie_id), movie_title, city_id);
             }
 
             const { rows } = await pool.query(`
@@ -65,15 +127,15 @@ const showtime_model = {
                     };
                 }
                 theatersMap[row.theater_id].showtimes.push({
-                    showtime_id:     row.showtime_id,
-                    screen_id:       row.screen_id,
-                    screen_name:     row.screen_name,
-                    screen_type:     row.screen_type,
-                    show_time:       row.show_time,
-                    show_format:     row.show_format,
-                    movie_language:  row.movie_language,
+                    showtime_id:      row.showtime_id,
+                    screen_id:        row.screen_id,
+                    screen_name:      row.screen_name,
+                    screen_type:      row.screen_type,
+                    show_time:        row.show_time,
+                    show_format:      row.show_format,
+                    movie_language:   row.movie_language,
                     price_multiplier: row.price_multiplier,
-                    available_seats: parseInt(row.available_seats),
+                    available_seats:  parseInt(row.available_seats),
                 });
             });
 
@@ -134,7 +196,6 @@ const showtime_model = {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'showtime_not_found' }, data: {} };
             }
 
-            // Verify showtime exists
             const { rows: stRows } = await pool.query(
                 `SELECT id FROM tbl_showtimes WHERE id = $1 AND is_active = TRUE AND is_deleted = FALSE`,
                 [showtime_id]
@@ -143,7 +204,7 @@ const showtime_model = {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'showtime_not_found' }, data: {} };
             }
 
-            // Auto-cleanup expired reservations
+            // Release expired reservations
             await pool.query(`
                 UPDATE tbl_showtime_seats
                 SET status = 'available', reserved_at = NULL, reserved_until = NULL, updated_at = NOW()
@@ -165,12 +226,9 @@ const showtime_model = {
                 ORDER BY s.row_label ASC, s.seat_number ASC
             `, [showtime_id]);
 
-            // Group seats by row_label
             const rowsMap = {};
             rows.forEach((seat) => {
-                if (!rowsMap[seat.row_label]) {
-                    rowsMap[seat.row_label] = [];
-                }
+                if (!rowsMap[seat.row_label]) rowsMap[seat.row_label] = [];
                 rowsMap[seat.row_label].push({
                     seat_id:     seat.seat_id,
                     seat_number: seat.seat_number,

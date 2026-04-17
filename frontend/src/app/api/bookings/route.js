@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { v4 as uuidv4 } from 'uuid'; // Actually we don't have uuid installed. Wait, can we use crypto.randomUUID()? Yes Node has it.
 
 // Server-side in-memory Map
 export const bookingsMap = new Map();

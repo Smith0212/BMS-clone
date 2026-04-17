@@ -7,15 +7,16 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
+import { bmsApi } from '@/lib/bmsApi';
 
 const registerSchema = z.object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string(),
+}).refine((d) => d.password === d.confirmPassword, {
     message: "Passwords don't match",
-    path: ["confirmPassword"],
+    path: ['confirmPassword'],
 });
 
 export default function RegisterPage() {
@@ -23,20 +24,40 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
 
     const { register, handleSubmit, formState: { errors } } = useForm({
-        resolver: zodResolver(registerSchema)
+        resolver: zodResolver(registerSchema),
     });
 
     const onSubmit = async (data) => {
         setLoading(true);
         try {
-            // Dummy registration: Just simulate delay and push to users array locally (using api)
-            // Since it's a dummy app, we can just hit an api endpoint if we had one or just redirect and toast
-            await new Promise(res => setTimeout(res, 1000));
+            const [firstName, ...rest] = data.name.trim().split(' ');
+            const lastName = rest.join(' ');
 
-            toast.success("Registration successful! Please login.");
+            // 1. Create account
+            const signupRes = await bmsApi.signup({
+                first_name: firstName,
+                last_name:  lastName || '',
+                email:      data.email,
+                password:   data.password,
+            });
+
+            if (signupRes.code !== 1) {
+                throw new Error(signupRes.message || 'Registration failed');
+            }
+
+            // 2. Auto-verify OTP (returned in response for demo purposes)
+            if (signupRes.data?.otp) {
+                await bmsApi.verifyOtp({
+                    email:  data.email,
+                    otp:    signupRes.data.otp,
+                    action: 'signup',
+                });
+            }
+
+            toast.success('Account created! Please sign in.');
             router.push('/login');
         } catch (error) {
-            toast.error("Registration failed");
+            toast.error(error.message || 'Registration failed');
         } finally {
             setLoading(false);
         }
@@ -96,7 +117,7 @@ export default function RegisterPage() {
                         disabled={loading}
                         className="w-full flex justify-center rounded-md border border-transparent bg-primary-500 py-3 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50"
                     >
-                        {loading ? "Creating Account..." : "Register"}
+                        {loading ? 'Creating Account…' : 'Register'}
                     </button>
                 </form>
 

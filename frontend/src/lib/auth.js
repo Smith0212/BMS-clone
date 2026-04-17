@@ -1,53 +1,71 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-// In-memory array for dummy users
-export const users = [];
+const BMS_URL = process.env.BMS_API_URL || 'http://localhost:8856/api/v1';
+const BMS_KEY = process.env.BMS_API_KEY  || 'bms-api-key-2024';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
         CredentialsProvider({
             name: 'Credentials',
             credentials: {
-                email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" }
+                email:    { label: 'Email',    type: 'email' },
+                password: { label: 'Password', type: 'password' },
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
-                const user = users.find(u => u.email === credentials.email);
+                try {
+                    const res = await fetch(`${BMS_URL}/user/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'api-key': BMS_KEY,
+                            'accept-language': 'en',
+                        },
+                        body: JSON.stringify({
+                            email:    credentials.email,
+                            password: credentials.password,
+                        }),
+                    });
 
-                if (user && user.password === credentials.password) {
-                    return { id: user.id, name: user.name, email: user.email };
+                    const data = await res.json();
+
+                    if (data.code === 1 && data.data?.user_token) {
+                        const { user_id, first_name, last_name, email, user_token } = data.data;
+                        return {
+                            id:           String(user_id),
+                            name:         `${first_name || ''} ${last_name || ''}`.trim() || email,
+                            email:        email,
+                            backendToken: user_token,
+                        };
+                    }
+                    // Surface the backend error message to the login page
+                    throw new Error(data.message || 'Invalid credentials');
+                } catch (err) {
+                    throw new Error(err.message || 'Login failed');
                 }
-
-                // Dummy fallback test user
-                if (credentials.email === 'test@test.com' && credentials.password === 'password') {
-                    return { id: 'test-1', name: 'Test User', email: 'test@test.com' };
-                }
-
-                throw new Error("Invalid credentials");
-            }
-        })
+            },
+        }),
     ],
     session: { strategy: 'jwt' },
     pages: {
         signIn: '/login',
-        error: '/login',
+        error:  '/login',
     },
     callbacks: {
         jwt({ token, user }) {
             if (user) {
-                token.id = user.id;
+                token.id           = user.id;
+                token.backendToken = user.backendToken;
             }
             return token;
         },
         session({ session, token }) {
-            if (token) {
-                session.user.id = token.id;
-            }
+            session.user.id           = token.id;
+            session.user.backendToken = token.backendToken;
             return session;
-        }
+        },
     },
     secret: process.env.NEXTAUTH_SECRET || 'fallback_secret_for_development_purposes',
 });
