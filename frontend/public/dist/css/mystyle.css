@@ -1,0 +1,158 @@
+.error-message {
+  color: #dc3545;
+  /* Bootstrap's danger color */
+  padding-top: 0.25rem;
+  /* Adjusts space between input and error message */
+  font-size: 0.875rem;
+  /* Slightly smaller than the default font size */
+  line-height: 1.2;
+  /* Adjust line height for better readability */
+}
+
+.header-shadow {
+  /* box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); */
+  /* box-shadow: rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em; */
+  box-shadow: rgba(17, 17, 26, 0.068) 0px 1px 2px;
+  /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);  */
+  z-index: 1001;
+  /* Ensure it's above other elements */
+}
+
+
+.active-color {
+  color: #9c9c9c !important;
+}
+
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+
+.revenue-card {
+  border-radius: 8px;
+  box-shadow: none;
+  overflow: hidden;
+  color: white;
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* Smooth zoom and shadow transition */
+}
+
+.revenue-card:hover {
+  transform: scale(1.01);
+  /* Zoom in the card */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  /* Add shadow effect */
+}
+
+.revenue-card .card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.revenue-card h6 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 0;
+  color: white;
+}
+
+.revenue-card h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 8px 0;
+  color: white;
+}
+
+.revenue-card .icon-box {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.revenue-card .icon-box i {
+  font-size: 28px;
+  color: white;
+  /* Set the icon color */
+  transition: transform 0.3s ease;
+  /* Smooth icon animation */
+}
+
+.revenue-card:hover .icon-box i {
+  color: white;
+  /* Ensure the color remains unchanged on hover */
+  transform: none;
+  /* Prevent scaling */
+}
+
+
+/*-----MODE------*/
+
+.modal-content {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: slide-down 0.3s ease-out;
+}
+
+.modal-header {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #706f6f;
+}
+
+.modal-dialog {
+  z-index: 1050;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.back {
+  background-color: #f2f2f2;
+  outline: none;
+}
+
+.back:hover {
+  background-color: #f2f2f2;
+  box-shadow: rgba(17, 17, 26, 0.068) 0px 2px 2px;
+}
+
+.back :focus {
+  outline: none;
+  border: none;
+}
+
+.text-green {
+  font-weight: 500 !important;
+  color: rgb(6, 149, 35) !important;
+}
