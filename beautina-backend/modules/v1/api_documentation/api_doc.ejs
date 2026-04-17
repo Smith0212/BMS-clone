@@ -1,0 +1,2057 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<link href="https://unpkg.com/vuetify@1.0.17/dist/vuetify.min.css" type="text/css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons" rel="stylesheet">
+	<link rel="shortcut icon" href="<%= GLOBALS.LOGO %>">
+	<title>
+		<%= GLOBALS.APP_NAME %> API LIST
+	</title>
+	<style type="text/css">
+		.medium-text {
+			font-size: 18px;
+			color: white;
+		}
+
+		.js div#preloader {
+			position: fixed;
+			left: 0;
+			top: 0;
+			z-index: 999;
+			width: 100%;
+			height: 100%;
+			overflow: visible;
+			/* background: #fff url('<%= GLOBALS.BASE_URL_WITHOUT_API %>images/') no-repeat center center; */
+		}
+	</style>
+</head>
+
+<body class="js">
+	<div id="preloader"></div>
+	<div id="app">
+		<v-app id="inspire">
+			<v-layout justify column>
+				<v-flex style="margin:10px auto 10px auto; padding:0px; text-align:center;" center right sm2 xs2 md2 lg2
+					xl2>
+					<img src='<%= GLOBALS.LOGO %>' width="120px"><br>
+					<strong style="font-size:24px;">
+						<%= GLOBALS.APP_NAME %> API LIST
+					</strong><br><br>
+					<v-alert :value="true" outline color="white" style="padding:5px;">
+						<v-chip color="black" text-color="white">
+							<v-avatar>
+								<v-icon>bookmark</v-icon>
+							</v-avatar><b>TOTAL {{messages.length}} APIs</b>
+						</v-chip>
+					</v-alert>
+					<v-alert :value="true" outline color="white" style="padding:5px;">
+						<v-chip color="black" text-color="white">
+							<v-avatar>
+								<v-icon>label_important</v-icon>
+							</v-avatar><b>All requests require API-KEY in header</b>
+						</v-chip>
+						<v-chip color="black" text-color="white">
+							<v-avatar>
+								<v-icon>label_important</v-icon>
+							</v-avatar><b>Protected routes require token authentication</b>
+						</v-chip>
+					</v-alert>
+				</v-flex>
+				<v-flex style="margin:0px auto; padding:0px;" center right sm2 xs2 md2 lg2 xl2>
+					<div id="main1" style="margin:0px auto; position:sticky;">
+						<table border="0" cellpadding="10" cellspacing="10" width="100%"
+							style="background: linear-gradient(150deg, #121213 50%, #1a1c27) !important;color: #fff;font-weight: bold;">
+							<tr>
+								<td><b>Server URL </b></td>
+								<td>:&nbsp;&nbsp;<b>
+										<%= GLOBALS.PORT_BASE_URL %>/api/v1/
+									</b></td>
+							</tr>
+							<tr>
+								<td><b>Header Parameters </b></td>
+								<td>:&nbsp;&nbsp;<b>api-key(encrypted), token(encrypted), type('app'),
+										accept-language('en'), timezone('Asia/Calcutta')</b></td>
+							</tr>
+							<tr>
+								<td><b>API-KEY</b></td>
+								<td>:&nbsp;&nbsp;<b>
+										<%= GLOBALS.API_KEY %>
+									</b></td>
+							</tr>
+							<tr>
+								<td><b>Encryption Key</b></td>
+								<td>:&nbsp;&nbsp;<b>
+										<%= GLOBALS.KEY %>
+									</b></td>
+							</tr>
+							<tr>
+							<tr>
+								<td><b>Encryption IV</b></td>
+								<td>:&nbsp;&nbsp;<b>
+										<%= GLOBALS.IV %>
+									</b></td>
+							</tr>
+							<tr>
+								<td><b>S3_BUCKET ROOT </b></td>
+								<td>:&nbsp;&nbsp;<b>
+										<%= GLOBALS.S3_BUCKET_ROOT %>
+									</b></td>
+							</tr>
+							<tr>
+								<td><b>S3_BUCKET FOLDER FOR USER PROFILE </b></td>
+								<td>:&nbsp;&nbsp;<b>
+										<%= GLOBALS.USER_IMAGE %>
+									</b></td>
+							</tr>
+						</table>
+						<br> <br>
+					</div>
+				</v-flex>
+				<v-flex style="margin:0px auto;" center right sm2 xs2 md2 lg2 xl2>
+					<a target="_blank" href='/v1/api_document/code'>
+						<v-btn color="blue-grey" class="white--text">
+							CODE REFERENCE <v-icon right dark>code</v-icon>
+						</v-btn>
+					</a>
+					<!-- <a target="_blank" href='https://dev.pay4parky.com/enc_dec.php'> -->
+					<a target="_blank" href='http://localhost/Project/VentureSessions/enc_dec.php'>
+						<v-btn color="blue-grey" class="white--text">
+							ENCRYPTION URL <v-icon right dark>lock</v-icon>
+						</v-btn>
+					</a>
+
+				</v-flex>
+				<v-expansion-panel popout>
+					<v-expansion-panel-content v-for="(message, i) in messages" :key="i" hide-actions>
+						<v-layout slot="header" align-center row spacer>
+							<v-flex sm1 xs1 md1 lg1 xl1>
+								<v-avatar slot="activator" size="36px">
+									<v-icon :color="message.color">{{ message.icon }}</v-icon>
+								</v-avatar>
+							</v-flex>
+							<v-flex sm3 xs3 md3 lg3 xl3>
+								<strong v-html="message.title"></strong>
+								<v-chip v-if="message.meth" :color="`${message.color} lighten-4`" label small
+									class="ml-0">
+									{{ message.meth }}
+								</v-chip>
+							</v-flex>
+							<v-flex sm3 xs3 md3 lg3 xl3>
+								<strong v-html="message.name"></strong><br>
+								<span v-if="message.updated" style="color:orange">{{ message.updated }}</span>
+								<span v-if="message.new_added" style="color:green"><span
+										v-html="message.new_added"></span></span>
+							</v-flex>
+							<v-flex sm4 xs4 md4 lg4 xl4>
+								<v-flex v-if="message.link" class="grey--text" ellipsis hidden-sm-and-down>
+									{{ message.link }}
+								</v-flex>
+								<v-flex class="grey--text" ellipsis hidden-sm-and-down>
+									<span v-if="message.imp" style="color:darkred">SHOW IMPORTANT NOTE INSIDE</span>
+								</v-flex>
+							</v-flex>
+						</v-layout>
+						<v-card dark>
+							<v-container>
+								<v-layout v-if="message.new_tag === '0'">
+									<v-flex xs12 align-end flexbox>
+										<v-alert v-if="message.new_added" :value="true" outline color="white"
+											style="padding:5px;">
+											<v-chip color="green" text-color="white">
+												<v-avatar>
+													<v-icon>fiber_new</v-icon>
+												</v-avatar> NEW
+											</v-chip>
+											<span v-html="message.new_added"></span>
+										</v-alert>
+										<v-alert v-if="message.updated" :value="true" outline color="white"
+											style="padding:5px;">
+											<v-chip color="orange" text-color="white">
+												<v-avatar>
+													<v-icon>update</v-icon>
+												</v-avatar> UPDATED
+											</v-chip>
+											<span>{{ message.updated }}</span>
+										</v-alert>
+										<v-alert :value="true" outline color="white" style="padding:5px;">
+											<v-chip color="teal" text-color="white">
+												<v-avatar>
+													<v-icon>check_circle</v-icon>
+												</v-avatar> MANDATORY
+											</v-chip>
+											<p v-html="message.mandatory" style="margin-left:10px;"></p>
+										</v-alert>
+										<v-alert :value="true" outline color="white" style="padding:5px;">
+											<v-chip outline color="#F0F4C3">
+												<v-avatar>
+													<v-icon>check_circle</v-icon>
+												</v-avatar>OPTIONAL
+											</v-chip>
+											<span>{{ message.optional }}
+										</v-alert>
+										<v-alert v-if="message.link" :value="true" outline color="white"
+											style="padding:5px;">
+											<v-chip color="light-green darken-2" text-color="white">
+												<v-avatar>
+													<v-icon>link</v-icon>
+												</v-avatar> LINK
+											</v-chip>
+											<span>{{ message.link }}
+										</v-alert>
+										<v-alert v-if="message.imp" :value="true" outline color="white"
+											style="padding:5px;">
+											<v-chip color="red darken-2" text-color="white">
+												<v-avatar>
+													<v-icon>new_releases</v-icon>
+												</v-avatar> IMPORTANT
+											</v-chip>
+											<p v-html="message.imp"></p>
+										</v-alert>
+										<v-alert v-if="message.notes" :value="true" outline color="white"
+											style="padding:5px;">
+											<v-chip color="blue lighten-1" text-color="white">
+												<v-avatar>
+													<v-icon>bookmark</v-icon>
+												</v-avatar> NOTES
+											</v-chip>
+											<span>{{ message.notes }}
+										</v-alert>
+										<v-alert v-if="message.example" :value="true" outline color="white"
+											style="padding:5px;">
+											<v-chip color="red darken-2" text-color="white">
+												<v-avatar>
+													<v-icon>check_circle</v-icon>
+												</v-avatar> EXAMPLE
+											</v-chip>
+											<p v-html="message.example"></p>
+										</v-alert>
+										<v-layout style="margin-top:-4px">
+											<v-flex xs6 align-end flexbox>
+												<v-alert :value="true" outline color="yellow" icon="priority_high"
+													style="padding:5px;">
+													<span class="grey--text">HEADER : {{ message.is_header }}, PUSH : {{
+														message.is_push }}</span><br>
+													<span>HEADER : {{ message.header }}</span>
+												</v-alert>
+											</v-flex>
+											<v-flex xs6 align-end flexbox>
+												<v-alert style="margin-left:4px; padding:5px;" :value="true" outline
+													color="yellow" icon="priority_high">
+													STATUS : <span v-html="message.status"></span>
+												</v-alert>
+											</v-flex>
+										</v-layout>
+									</v-flex>
+								</v-layout>
+							</v-container>
+							<v-card-actions>
+							</v-card-actions>
+						</v-card>
+					</v-expansion-panel-content>
+				</v-expansion-panel>
+			</v-layout>
+		</v-app>
+	</div>
+	<div id="asd"></div>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+	<script src="https://unpkg.com/vuetify@1.0.17/dist/vuetify.min.js"></script>
+	<script src="https://unpkg.com/babel-polyfill/dist/polyfill.min.js"></script>
+	<script>
+
+		jQuery(document).ready(function ($) {
+			$('#preloader').fadeOut('slow', function () { $(this).remove(); });
+		});
+
+		var base_url = "<%= GLOBALS.PORT_BASE_URL %>/api/v1/";
+		var base_url_without_api = "<%= GLOBALS.BASE_URL_WITHOUT_API %>";
+		let i = 1;
+		let j = 1;
+
+
+		new Vue({
+			el: '#app',
+			data: () => ({
+messages: [
+
+    // ==================== USER AUTH APIs ====================
+    {
+        new_tag: '0',
+        color: 'orange',
+        icon: 'person_add',
+        title: i++ + ' : User Auth',
+        name: 'User Sign Up',
+        meth: 'POST',
+        link: base_url + "user/signup",
+        mandatory: "signup_type, first_name, last_name, country_code, phone",
+        optional: "email (required if signup_type=s), password (required if signup_type=s), social_id (required if signup_type=g/a/f), profile_image, fcm_token, device_type, device_name, os_version, app_version, timezone",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Register a new user. signup_type values: 's'=Standard, 'g'=Google, 'a'=Apple, 'f'=Facebook. Standard signup requires email + password. Social signup requires social_id; email/password are optional. OTP will be sent to the provided email after signup.",
+        example: '{"signup_type":"s","first_name":"John","last_name":"Doe","email":"john@example.com","password":"secure123","country_code":"+1","phone":"1234567890","device_type":"A","os_version":"13.0","timezone":"Asia/Karachi"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - OTP sent)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Email already registered)",
+        imp: "signup_type: 's'=Standard (email+password required), 'g'=Google, 'a'=Apple, 'f'=Facebook (social_id required). After signup, user must verify OTP via /verifyOtp before logging in."
+    },
+    {
+        new_tag: '0',
+        color: 'orange',
+        icon: 'verified_user',
+        title: i++ + ' : User Auth',
+        name: 'User Verify OTP',
+        meth: 'POST',
+        link: base_url + "user/verifyOtp",
+        mandatory: "email, otp, action",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Verify the 4-digit OTP sent to the user's email. Used for both signup verification and forgot-password flow.",
+        example: '{"email":"john@example.com","otp":"1234","action":"signup"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 3 (Invalid or expired OTP)",
+        imp: "action must be 'signup' or 'forgot'. OTP is exactly 4 digits. OTP expires after a limited time - use /resendOtp if expired."
+    },
+    {
+        new_tag: '0',
+        color: 'orange',
+        icon: 'login',
+        title: i++ + ' : User Auth',
+        name: 'User Login',
+        meth: 'POST',
+        link: base_url + "user/login",
+        mandatory: "email, device_type, os_version, timezone",
+        optional: "login_type (default: s), password (required if login_type=s), social_id (required if login_type=g/a/f), device_name, app_version, fcm_token, ip",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Authenticate a user. Standard login requires email + password. Social login requires email + social_id. Returns an auth token on success.",
+        example: '{"login_type":"s","email":"john@example.com","password":"secure123","device_type":"A","os_version":"13.0","timezone":"Asia/Karachi"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - token returned)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 4 (Invalid email or password)<br>4. HTTP_OK[200] - code : 5 (Account not verified)",
+        imp: "device_type: 'A'=Android, 'I'=iOS, 'W'=Web. The token returned must be sent in the header for all protected routes. Email must be verified before login is allowed."
+    },
+    {
+        new_tag: '0',
+        color: 'orange',
+        icon: 'refresh',
+        title: i++ + ' : User Auth',
+        name: 'User Resend OTP',
+        meth: 'POST',
+        link: base_url + "user/resendOtp",
+        mandatory: "email, action",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Resend OTP to the user's email. Use when the previous OTP has expired or was not received.",
+        example: '{"email":"john@example.com","action":"signup"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - new OTP sent)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 5 (Email not found)",
+        imp: "action must be 'signup' or 'forgot'. Rate limiting may apply to prevent OTP abuse."
+    },
+    {
+        new_tag: '0',
+        color: 'orange',
+        icon: 'lock_reset',
+        title: i++ + ' : User Auth',
+        name: 'User Forgot Password',
+        meth: 'POST',
+        link: base_url + "user/forgotPassword",
+        mandatory: "email",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Initiate password reset by sending an OTP to the user's email.",
+        example: '{"email":"john@example.com"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - OTP sent)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 5 (Email not registered)",
+        imp: "Flow: forgotPassword -> verifyOtp (action='forgot') -> resetPassword."
+    },
+    {
+        new_tag: '0',
+        color: 'orange',
+        icon: 'lock',
+        title: i++ + ' : User Auth',
+        name: 'User Reset Password',
+        meth: 'POST',
+        link: base_url + "user/resetPassword",
+        mandatory: "email, new_password",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Set a new password after successful OTP verification. Must be called after /verifyOtp with action='forgot'.",
+        example: '{"email":"john@example.com","new_password":"newSecure123"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 6 (OTP not verified yet)",
+        imp: "new_password must be 6-50 characters. OTP must be verified (action='forgot') before calling this endpoint."
+    },
+    {
+        new_tag: '0',
+        color: 'orange',
+        icon: 'logout',
+        title: i++ + ' : User Auth',
+        name: 'User Logout',
+        meth: 'POST',
+        link: base_url + "user/logout",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Invalidate the current user session. The token sent in the header will be revoked.",
+        example: '{}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Protected route - token required in header. Token is permanently invalidated after logout."
+    },
+
+    // ==================== USER PROFILE APIs ====================
+    {
+        new_tag: '0',
+        color: 'blue',
+        icon: 'account_circle',
+        title: i++ + ' : User Profile',
+        name: 'User Get Profile',
+        meth: 'GET',
+        link: base_url + "user/getProfile",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Retrieve the authenticated user's profile information including name, email, phone, profile image, DOB, location, and account status.",
+        example: 'No body required. Send token in header.',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - profile data returned)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "This is a GET request. No request body needed. Token must be sent in the Authorization header."
+    },
+    {
+        new_tag: '0',
+        color: 'blue',
+        icon: 'edit',
+        title: i++ + ' : User Profile',
+        name: 'User Update Profile',
+        meth: 'POST',
+        link: base_url + "user/updateProfile",
+        mandatory: "",
+        optional: "first_name, last_name, profile_image, country_code, phone, email, dob, city, state, country",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Update one or more profile fields. Only fields provided in the request body will be updated. All fields are optional but at least one should be sent.",
+        example: '{"first_name":"Johnny","last_name":"Doe","phone":"9876543210","dob":"1990-01-01","city":"Lahore","country":"Pakistan"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "dob format: YYYY-MM-DD. phone must be 6-20 digits. country_code format: +1 to +999999. first_name and last_name must be 2-255 characters."
+    },
+    {
+        new_tag: '0',
+        color: 'blue',
+        icon: 'password',
+        title: i++ + ' : User Profile',
+        name: 'User Change Password',
+        meth: 'POST',
+        link: base_url + "user/changePassword",
+        mandatory: "old_password, new_password, confirm_password",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Change the authenticated user's password. Requires the current (old) password for verification.",
+        example: '{"old_password":"oldPass123","new_password":"newPass456","confirm_password":"newPass456"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)<br>4. HTTP_OK[200] - code : 8 (Incorrect old password)",
+        imp: "new_password must be 6-50 characters. confirm_password must exactly match new_password."
+    },
+    {
+        new_tag: '0',
+        color: 'blue',
+        icon: 'delete_forever',
+        title: i++ + ' : User Profile',
+        name: 'User Delete Account',
+        meth: 'POST',
+        link: base_url + "user/deleteAccount",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Permanently delete the authenticated user's account and all associated data.",
+        example: '{}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - account deleted)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "This action is irreversible. All user data, bookings, and activity history will be permanently removed."
+    },
+
+    // ==================== USER HOME APIs ====================
+    {
+        new_tag: '0',
+        color: 'cyan',
+        icon: 'home',
+        title: i++ + ' : User Home',
+        name: 'User Home Dashboard',
+        meth: 'GET',
+        link: base_url + "user/userHome",
+        mandatory: "",
+        optional: "address_id, category_id, search, limit, radius_km",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns customer home dashboard data in one response: selected/default location, service categories, nearby service providers, favorite services, and upcoming bookings.",
+        example: '{"address_id":12,"category_id":2,"search":"hair","limit":20,"radius_km":15}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Distance filter uses selected address latitude/longitude and applies nearby radius in KM. Defaults: limit=20, radius_km=50. radius_km range: 1-500."
+    },
+    {
+        new_tag: '0',
+        color: 'cyan',
+        icon: 'photo',
+        title: i++ + ' : User Home',
+        name: 'Get Banner',
+        meth: 'GET',
+        link: base_url + "user/getBanner",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns active banner ads for customer/all audience where start/end date conditions match current time. Sorted by sort_order then latest id.",
+        example: '{}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Protected GET route. Only banners with is_active=true, is_deleted=false, valid date range, and target_audience in ('all','customer') are returned."
+    },
+    {
+        new_tag: '1',
+        color: 'cyan',
+        icon: 'category',
+        title: i++ + ' : User Home',
+        name: 'Get Service Categories',
+        meth: 'GET',
+        link: base_url + "user/getServiceCategories",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all active service categories with their subcategories. Each category includes: category_id, category_name, category_icon. Each subcategory includes: subcategory_id, subcategory_name, subcategory_icon, subcategory_description.",
+        example: '{}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Protected GET route. Returns only is_active=true, is_deleted=false categories and their subcategories. Categories and subcategories are sorted alphabetically by name."
+    },
+
+    // ==================== OWNER AUTH APIs ====================
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'store',
+        title: i++ + ' : Owner Auth',
+        name: 'Owner Sign Up',
+        meth: 'POST',
+        link: base_url + "owner/signup",
+        mandatory: "signup_type, first_name, last_name, country_code, phone",
+        optional: "email (required if signup_type=s), password (required if signup_type=s), social_id (required if signup_type=g/a/f), profile_image, fcm_token, device_type, device_name, os_version, app_version, timezone",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Register a new business owner account. Standard signup requires email + password. Social signup requires social_id. OTP will be sent to email after signup. After verification, owner must complete 3 onboarding steps.",
+        example: '{"signup_type":"s","first_name":"Jane","last_name":"Smith","email":"jane@business.com","password":"owner123","country_code":"+92","phone":"3001234567","device_type":"I","os_version":"16.0","timezone":"Asia/Karachi"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - OTP sent)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Email already registered)",
+        imp: "After signup + OTP verification, owner must complete onboarding: (1) saveBusinessInfo -> (2) saveFinancialInfo -> (3) saveDocuments."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'verified_user',
+        title: i++ + ' : Owner Auth',
+        name: 'Owner Verify OTP',
+        meth: 'POST',
+        link: base_url + "owner/verifyOtp",
+        mandatory: "email, otp, action",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Verify the 4-digit OTP sent to the owner's email for signup confirmation or forgot-password flow.",
+        example: '{"email":"jane@business.com","otp":"4321","action":"signup"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 3 (Invalid or expired OTP)",
+        imp: "action must be 'signup' or 'forgot'. OTP is exactly 4 digits."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'refresh',
+        title: i++ + ' : Owner Auth',
+        name: 'Owner Resend OTP',
+        meth: 'POST',
+        link: base_url + "owner/resendOtp",
+        mandatory: "email, action",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Resend OTP to the owner's email when the previous OTP has expired or was not received.",
+        example: '{"email":"jane@business.com","action":"signup"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - new OTP sent)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 5 (Email not found)",
+        imp: "action must be 'signup' or 'forgot'."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'login',
+        title: i++ + ' : Owner Auth',
+        name: 'Owner Login',
+        meth: 'POST',
+        link: base_url + "owner/login",
+        mandatory: "email, device_type, os_version, timezone",
+        optional: "login_type (default: s), password (required if login_type=s), social_id (required if login_type=g/a/f), device_name, app_version, fcm_token, ip",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Authenticate an owner. Standard login requires email + password. Social login requires email + social_id. Returns an auth token on success.",
+        example: '{"login_type":"s","email":"jane@business.com","password":"owner123","device_type":"I","os_version":"16.0","timezone":"Asia/Karachi"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - token returned)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 4 (Invalid credentials)<br>4. HTTP_OK[200] - code : 5 (Account not verified)",
+        imp: "device_type: 'A'=Android, 'I'=iOS, 'W'=Web. Token returned must be included in the header for all protected owner routes."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'lock_reset',
+        title: i++ + ' : Owner Auth',
+        name: 'Owner Forgot Password',
+        meth: 'POST',
+        link: base_url + "owner/forgotPassword",
+        mandatory: "email",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Initiate owner password reset by sending an OTP to the registered email.",
+        example: '{"email":"jane@business.com"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - OTP sent)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 5 (Email not registered)",
+        imp: "Flow: forgotPassword -> verifyOtp (action='forgot') -> resetPassword."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'lock',
+        title: i++ + ' : Owner Auth',
+        name: 'Owner Reset Password',
+        meth: 'POST',
+        link: base_url + "owner/resetPassword",
+        mandatory: "email, new_password",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key",
+        notes: "Set a new password after OTP verification. Must be called after /verifyOtp with action='forgot'.",
+        example: '{"email":"jane@business.com","new_password":"newOwnerPass789"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 6 (OTP not verified yet)",
+        imp: "new_password must be 6-50 characters."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'logout',
+        title: i++ + ' : Owner Auth',
+        name: 'Owner Logout',
+        meth: 'POST',
+        link: base_url + "owner/logout",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Invalidate the current owner session token.",
+        example: '{}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Protected route - token required in header. Token is permanently invalidated after logout."
+    },
+
+    // ==================== OWNER ONBOARDING APIs ====================
+    {
+        new_tag: '0',
+        color: 'green',
+        icon: 'store',
+        title: i++ + ' : Owner Onboarding',
+        name: 'Step 1 - Save Business Info',
+        meth: 'POST',
+        link: base_url + "owner/saveBusinessInfo",
+        mandatory: "business_name, country_code, business_phone_number, business_address, services, service_type",
+        optional: "business_country",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Step 1 of owner onboarding. Save the business details including name, contact, address, services offered, and service delivery type.",
+        example: '{"business_name":"Jane Salon","country_code":"+92","business_phone_number":"2071234567","business_address":"10 Main Blvd, Karachi","services":["Haircut","Manicure","Facial"],"service_type":"salon","business_country":"Pakistan"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "service_type must be one of: 'salon', 'home', 'both'. services must be a non-empty array of strings. business_phone_number must be 6-20 digits."
+    },
+    {
+        new_tag: '0',
+        color: 'green',
+        icon: 'account_balance',
+        title: i++ + ' : Owner Onboarding',
+        name: 'Step 2 - Save Financial Info',
+        meth: 'POST',
+        link: base_url + "owner/saveFinancialInfo",
+        mandatory: "iban_number, company_registration_id, invoice_email, national_id",
+        optional: "vat_number",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Step 2 of owner onboarding. Save financial and legal information required for payouts and compliance.",
+        example: '{"iban_number":"GB29NWBK60161331926819","company_registration_id":"12345678","vat_number":"GB123456789","invoice_email":"billing@janesalon.com","national_id":"AB123456C"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "iban_number max 34 characters. national_id is required (national ID card or passport number). vat_number is optional (max 50 chars). invoice_email must be a valid email."
+    },
+    {
+        new_tag: '0',
+        color: 'green',
+        icon: 'upload_file',
+        title: i++ + ' : Owner Onboarding',
+        name: 'Step 3 - Save Documents',
+        meth: 'POST',
+        link: base_url + "owner/saveDocuments",
+        mandatory: "company_registration_certificate, iban_proof",
+        optional: "vat_certificate",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Step 3 of owner onboarding. Upload required legal document file URLs (stored on S3). After this step, the owner account is submitted for admin review.",
+        example: '{"company_registration_certificate":"https://s3.example.com/docs/cert_123.pdf","iban_proof":"https://s3.example.com/docs/iban_letter.pdf","vat_certificate":"https://s3.example.com/docs/vat_cert.pdf"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - account pending review)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "All document values must be S3 URLs (max 500 characters each). company_registration_certificate and iban_proof are mandatory. vat_certificate is optional. Account becomes active after admin approval."
+    },
+
+    // ==================== OWNER PROFILE APIs ====================
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'manage_accounts',
+        title: i++ + ' : Owner Profile',
+        name: 'Owner Get Profile',
+        meth: 'GET',
+        link: base_url + "owner/getProfile",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Retrieve the authenticated owner's profile including personal info, business details, and onboarding status.",
+        example: 'No body required. Send token in header.',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - profile data returned)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "This is a GET request. No request body needed."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'edit',
+        title: i++ + ' : Owner Profile',
+        name: 'Owner Update Profile',
+        meth: 'POST',
+        link: base_url + "owner/updateProfile",
+        mandatory: "",
+        optional: "first_name, last_name, profile_image, country_code, phone, email, dob, city, state, country, bio, about_us",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Update the authenticated owner's profile. Updates personal fields in tbl_users (first_name, last_name, profile_image, country_code, phone, email, dob, city, state, country) and provider fields in tbl_provider_profiles (bio, about_us). Only provided fields are updated. Use the dedicated gallery APIs to manage portfolio images.",
+        example: '{"first_name":"Janet","phone":"3001234568","email":"janet@example.com","dob":"1985-05-15","profile_image":"https://s3.example.com/profiles/owner_456.jpg","bio":"Experienced salon owner with 10 years in the industry.","about_us":"Janes Salon offers premium beauty services in Karachi."}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error / no fields provided)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "dob format: YYYY-MM-DD. phone must be 6-20 digits. At least one field must be provided."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'photo_library',
+        title: i++ + ' : Owner Gallery',
+        name: 'Owner Get Gallery Images',
+        meth: 'GET',
+        link: base_url + "owner/getGalleryImages",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all active gallery/portfolio images for the authenticated owner.",
+        example: '',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Response includes images array with id, image_url, and created_at per item."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'add_photo_alternate',
+        title: i++ + ' : Owner Gallery',
+        name: 'Owner Add Gallery Images',
+        meth: 'POST',
+        link: base_url + "owner/addGalleryImages",
+        mandatory: "images",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Add one or more portfolio images to the owner's gallery.",
+        example: '{"images":["https://s3.example.com/portfolio/img1.jpg","https://s3.example.com/portfolio/img2.jpg"]}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "images must be a non-empty array of URL strings (max 500 chars each). Returns the inserted image records."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'delete',
+        title: i++ + ' : Owner Gallery',
+        name: 'Owner Delete Gallery Image',
+        meth: 'POST',
+        link: base_url + "owner/deleteGalleryImage",
+        mandatory: "image_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Soft-delete a single gallery image by its ID. The image must belong to the authenticated owner.",
+        example: '{"image_id":12}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)<br>4. HTTP_OK[200] - code : 0 (Image not found or already deleted)",
+        imp: "image_id must be a positive integer. Returns error if the image does not belong to this owner or was already deleted."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'password',
+        title: i++ + ' : Owner Profile',
+        name: 'Owner Change Password',
+        meth: 'POST',
+        link: base_url + "owner/changePassword",
+        mandatory: "old_password, new_password, confirm_password",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Change the authenticated owner's password. Requires the current password for verification.",
+        example: '{"old_password":"oldOwner123","new_password":"newOwner456","confirm_password":"newOwner456"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)<br>4. HTTP_OK[200] - code : 8 (Incorrect old password)",
+        imp: "new_password must be 6-50 characters. confirm_password must exactly match new_password."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'delete_forever',
+        title: i++ + ' : Owner Profile',
+        name: 'Owner Delete Account',
+        meth: 'POST',
+        link: base_url + "owner/deleteAccount",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Permanently delete the owner account and all associated business data including listings, documents, and financial records.",
+        example: '{}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - account deleted)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "This action is irreversible. All business data, services, bookings, and uploaded documents will be permanently deleted."
+    },
+
+    // ==================== USER ADDRESS APIs ====================
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'location_on',
+        title: i++ + ' : User Address',
+        name: 'User Get Address',
+        meth: 'GET',
+        link: base_url + "user/address/getAddress",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Fetch all saved addresses for the authenticated user. Default address is marked in the response.",
+        example: 'No body required. Send token in header.',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Protected route. Returns user's address list associated with the logged-in account."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'add_location',
+        title: i++ + ' : User Address',
+        name: 'User Add Address',
+        meth: 'POST',
+        link: base_url + "user/address/addAddress",
+        mandatory: "address",
+        optional: "latitude, longitude, type, is_default",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Add a new user address. Optional coordinates and address type can be provided.",
+        example: '{"address":"Street 10, Block A, Karachi","latitude":"24.8607","longitude":"67.0011","type":"home","is_default":true}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "address max 500 chars, latitude/longitude max 16 chars, type max 30 chars. is_default must be boolean."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'edit_location',
+        title: i++ + ' : User Address',
+        name: 'User Update Address',
+        meth: 'POST',
+        link: base_url + "user/address/updateAddress",
+        mandatory: "address_id",
+        optional: "address, latitude, longitude, type, is_default",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Update an existing user address by id. Only provided fields are updated.",
+        example: '{"address_id":1,"address":"Street 20, Block B, Karachi","type":"office","is_default":false}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "address_id must be a positive integer. Remaining fields follow the same limits as addAddress."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'delete',
+        title: i++ + ' : User Address',
+        name: 'User Delete Address',
+        meth: 'POST',
+        link: base_url + "user/address/deleteAddress",
+        mandatory: "address_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Delete a saved user address by id.",
+        example: '{"address_id":1}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "address_id is required and must be a positive integer."
+    },
+
+    // ==================== SERVICE PROVIDER LISTING APIs ====================
+    {
+        new_tag: '0',
+        color: 'deep-orange',
+        icon: 'store',
+        title: i++ + ' : Service Providers',
+        name: 'Get Service Providers (List View)',
+        meth: 'GET',
+        link: base_url + "user/getServiceProviders",
+        mandatory: "",
+        optional: "address_id, latitude, longitude, category_id, subcategory_id, min_price, max_price, min_rating, max_rating, filter_service_type, gender_preference, search, sort_by, page, limit, radius_km",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns a paginated list of service providers near the user's selected address or provided coordinates. Supports filtering by category, price range, rating, service type, gender preference, and keyword search. Also supports multiple sort orders.",
+        example: '{"address_id":12,"category_id":2,"subcategory_id":5,"search":"hair","sort_by":"nearest","filter_service_type":"salon","gender_preference":"female","min_price":10,"max_price":200,"min_rating":3,"page":1,"limit":20,"radius_km":15}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "sort_by values: 'recommended', 'nearest', 'rating_low', 'rating_high', 'price_low', 'price_high'. filter_service_type: 'salon' or 'home'. gender_preference: 'male' or 'female'. Defaults: page=1, limit=20, radius_km=50. Either address_id or latitude+longitude must be provided for distance-based filtering."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-orange',
+        icon: 'map',
+        title: i++ + ' : Service Providers',
+        name: 'Get Service Providers (Map View)',
+        meth: 'GET',
+        link: base_url + "user/getServiceProvidersMap",
+        mandatory: "",
+        optional: "address_id, latitude, longitude, category_id, subcategory_id, filter_service_type, gender_preference, search, radius_km",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all nearby service providers as map pins (provider_user_id, business_name, latitude, longitude, avg_rating). No pagination — optimized for map rendering. Supports the same location and filter params as the list view.",
+        example: '{"address_id":12,"category_id":2,"filter_service_type":"home","radius_km":20}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "No pagination. Returns lightweight pin data for map display. Use getServiceProviders for full details with pagination. Either address_id or latitude+longitude should be provided for proximity filtering."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-orange',
+        icon: 'storefront',
+        title: i++ + ' : Service Providers',
+        name: 'Get Service Provider Detail',
+        meth: 'POST',
+        link: base_url + "user/getServiceProviderDetail",
+        mandatory: "provider_user_id",
+        optional: "reviews_page, reviews_limit",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns full profile detail for a single service provider: business info, gallery, services offered, staff, availability, and paginated reviews.",
+        example: '{"provider_user_id":45}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "provider_user_id is required. reviews_page defaults to 1, reviews_limit defaults to 10 (max 50). The response includes is_favorite flag for the logged-in user."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-orange',
+        icon: 'favorite',
+        title: i++ + ' : Service Providers',
+        name: 'Toggle Favorite',
+        meth: 'POST',
+        link: base_url + "user/toggleFavorite",
+        mandatory: "provider_user_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Add or remove a service provider from the user's favorites. If the provider is not yet favorited it will be added; if already favorited it will be removed (toggle behavior).",
+        example: '{"provider_user_id":45}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success - favorited)<br>2. HTTP_OK[200] - code : 1 (Success - unfavorited)<br>3. HTTP_OK[200] - code : 0 (Validation error)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "provider_user_id must be a valid positive integer. The response message will indicate whether the provider was added or removed from favorites."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-orange',
+        icon: 'miscellaneous_services',
+        title: i++ + ' : Service Providers',
+        name: 'Get Provider Services',
+        meth: 'POST',
+        link: base_url + "user/getProviderServices",
+        mandatory: "provider_user_id",
+        optional: "subcategory_id",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns the list of active services offered by a specific service provider. Optionally filter by subcategory.",
+        example: '{"provider_user_id":45,"subcategory_id":3}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "provider_user_id is required and must be a positive integer. subcategory_id is optional — omit it to get all services of the provider."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-orange',
+        icon: 'inventory_2',
+        title: i++ + ' : Service Providers',
+        name: 'Get Provider Packages',
+        meth: 'POST',
+        link: base_url + "user/getProviderPackages",
+        mandatory: "provider_user_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns the list of active packages offered by a specific service provider.",
+        example: '{"provider_user_id":45}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "provider_user_id is required and must be a positive integer."
+    },
+
+    // ==================== OWNER ADDRESS APIs ====================
+    {
+        new_tag: '0',
+        color: 'brown',
+        icon: 'place',
+        title: i++ + ' : Owner Address',
+        name: 'Owner Get Address',
+        meth: 'GET',
+        link: base_url + "owner/address/getAddress",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Fetch all saved addresses for the authenticated owner.",
+        example: 'No body required. Send token in header.',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Protected route. Returns owner address list associated with logged-in owner."
+    },
+    {
+        new_tag: '0',
+        color: 'brown',
+        icon: 'add_location_alt',
+        title: i++ + ' : Owner Address',
+        name: 'Owner Add Address',
+        meth: 'POST',
+        link: base_url + "owner/address/addAddress",
+        mandatory: "address",
+        optional: "latitude, longitude, type, is_default",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Add a new owner address with optional coordinates, type, and default selection.",
+        example: '{"address":"Building 5, Downtown Riyadh","latitude":"24.7136","longitude":"46.6753","type":"branch","is_default":true}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "address max 500 chars, latitude/longitude max 16 chars, type max 30 chars. is_default must be boolean."
+    },
+    {
+        new_tag: '0',
+        color: 'brown',
+        icon: 'my_location',
+        title: i++ + ' : Owner Address',
+        name: 'Owner Update Address',
+        meth: 'POST',
+        link: base_url + "owner/address/updateAddress",
+        mandatory: "address_id",
+        optional: "address, latitude, longitude, type, is_default",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Update an owner address by id. Any subset of editable fields may be sent.",
+        example: '{"address_id":2,"address":"Building 9, Olaya, Riyadh","latitude":"24.7200","longitude":"46.6800","is_default":false}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "address_id must be a positive integer. Field limits are the same as owner addAddress."
+    },
+    {
+        new_tag: '0',
+        color: 'brown',
+        icon: 'delete_outline',
+        title: i++ + ' : Owner Address',
+        name: 'Owner Delete Address',
+        meth: 'POST',
+        link: base_url + "owner/address/deleteAddress",
+        mandatory: "address_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Delete an owner address by id.",
+        example: '{"address_id":2}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "address_id is required and must be a positive integer."
+    },
+
+    // ==================== OWNER SERVICE APIs ====================
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'list',
+        title: i++ + ' : Owner Service',
+        name: 'Get Services',
+        meth: 'GET',
+        link: base_url + "owner/getServices",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all non-deleted services (active and inactive) for the authenticated owner, including category, subcategory, and addons for each service.",
+        example: '',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Returns both active and inactive services. Each service includes is_active flag, category/subcategory info, and an add_ons array."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'add_circle',
+        title: i++ + ' : Owner Service',
+        name: 'Create Service',
+        meth: 'POST',
+        link: base_url + "owner/createService",
+        mandatory: "subcategory_id, service_name, price, time_in_minutes",
+        optional: "service_for, service_type (array), description, image_url, currency (default: SAR), addons (array: add_on_name required per addon; add_on_description, add_on_image_url, add_on_price, add_on_time_in_minutes optional)",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Create a new service for the authenticated owner under a given subcategory. Addons can be attached at creation time by passing an addons array. Each addon requires add_on_name; all other addon fields are optional.",
+        example: '{"subcategory_id":3,"service_name":"Classic Facial","service_for":"women","service_type":["onsite","home"],"description":"Deep cleansing facial","image_url":"https://s3.example.com/services/facial.jpg","currency":"SAR","price":150.00,"time_in_minutes":60,"addons":[{"add_on_name":"Eye Mask","add_on_description":"Hydrating eye mask","add_on_price":20.00,"add_on_time_in_minutes":10},{"add_on_name":"Neck Massage","add_on_price":30.00,"add_on_time_in_minutes":15}]}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Service created successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Subcategory not found)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "service_for: 'women', 'men', or 'unisex'. service_type is an array — allowed values: 'onsite', 'home'. currency defaults to 'SAR'. Returns service_id and the list of created addons."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'edit',
+        title: i++ + ' : Owner Service',
+        name: 'Edit Service',
+        meth: 'POST',
+        link: base_url + "owner/editService",
+        mandatory: "service_id",
+        optional: "subcategory_id, service_name, service_for, service_type (array), description, image_url, currency, price, time_in_minutes, addons (array), delete_addon_ids (array of addon IDs to remove)",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Edit an existing service owned by the authenticated provider. Only fields included in the request are updated. Addons: pass addon_id inside an addon object to update it; omit addon_id to insert a new one. Pass delete_addon_ids to soft-delete addons by their IDs.",
+        example: '{"service_id":5,"service_name":"Premium Facial","price":180.00,"time_in_minutes":75,"addons":[{"addon_id":12,"add_on_name":"Eye Mask Plus","add_on_price":25.00},{"add_on_name":"Arm Massage","add_on_price":35.00,"add_on_time_in_minutes":10}],"delete_addon_ids":[15,16]}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Service updated successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Service not found / not owned by provider)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "service_id is required. The service must belong to the authenticated owner. Addons with addon_id are updated; addons without addon_id are inserted as new. delete_addon_ids must belong to the same service — unrelated IDs are silently ignored."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'toggle_on',
+        title: i++ + ' : Owner Service',
+        name: 'Active / Inactive Service',
+        meth: 'POST',
+        link: base_url + "owner/activeInactiveService",
+        mandatory: "service_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Toggle the active/inactive status of a service. If the service is currently active it will be deactivated, and vice versa. Inactive services are hidden from customer listings.",
+        example: '{"service_id":5}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Status toggled — response contains is_active: true/false)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Service not found / not owned by provider)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "The service must belong to the authenticated owner. Response includes service_id and the new is_active value. Keyword in response: 'service_activated' or 'service_deactivated'."
+    },
+    {
+        new_tag: '0',
+        color: 'purple',
+        icon: 'delete',
+        title: i++ + ' : Owner Service',
+        name: 'Delete Service',
+        meth: 'POST',
+        link: base_url + "owner/deleteService",
+        mandatory: "service_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Soft-delete a service owned by the authenticated provider. The service is marked as deleted and will no longer appear in any listings.",
+        example: '{"service_id":5}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Service deleted successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Service not found / not owned by provider)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "The service must belong to the authenticated owner. This is a soft delete — the record is retained in the database with is_deleted = TRUE."
+    },
+
+    // ==================== OWNER PACKAGE APIs ====================
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'list',
+        title: i++ + ' : Owner Package',
+        name: 'Get Packages',
+        meth: 'GET',
+        link: base_url + "owner/getPackages",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all non-deleted packages (active and inactive) for the authenticated owner, including the list of included services with category and subcategory details.",
+        example: '',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "Returns both active and inactive packages. Each package includes is_active flag, package_time_in_minutes, and a services array with full service details."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'inventory_2',
+        title: i++ + ' : Owner Package',
+        name: 'Create Package',
+        meth: 'POST',
+        link: base_url + "owner/createPackage",
+        mandatory: "package_name, package_price, service_ids",
+        optional: "package_description, service_for, currency (default: SAR), package_time_in_minutes",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Create a new package for the authenticated owner by bundling existing services. service_ids must be a non-empty array of valid service IDs that belong to the owner.",
+        example: '{"package_name":"Bridal Package","package_price":500.00,"service_ids":[1,2,3],"package_description":"Complete bridal beauty treatment","service_for":"women","currency":"SAR","package_time_in_minutes":90}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Package created successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "service_ids must be a non-empty array of positive integers. service_for: 'women', 'men', or 'unisex'. currency defaults to 'SAR' (3-letter uppercase). package_name max 255 chars. package_time_in_minutes must be a positive integer (minutes)."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'edit',
+        title: i++ + ' : Owner Package',
+        name: 'Edit Package',
+        meth: 'POST',
+        link: base_url + "owner/editPackage",
+        mandatory: "package_id",
+        optional: "package_name, package_price, package_description, service_for, currency, package_time_in_minutes, service_ids (replace all), add_service_ids (add specific), remove_service_ids (remove specific)",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Edit an existing package. Only fields included in the request are updated. To manage services: use service_ids to replace all, or use add_service_ids / remove_service_ids for incremental changes.",
+        example: '{"package_id":10,"package_name":"Premium Bridal Package","package_price":650.00,"package_time_in_minutes":120,"add_service_ids":[4,5],"remove_service_ids":[1]}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Package updated successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Package not found / not owned by provider)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "package_id is required. The package must belong to the authenticated owner. package_time_in_minutes must be a positive integer (minutes). service_ids replaces all linked services; add_service_ids / remove_service_ids do incremental updates. Avoid using service_ids together with add/remove_service_ids."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'toggle_on',
+        title: i++ + ' : Owner Package',
+        name: 'Active / Inactive Package',
+        meth: 'POST',
+        link: base_url + "owner/activeInactivePackage",
+        mandatory: "package_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Toggle the active/inactive status of a package. If currently active it will be deactivated, and vice versa. Inactive packages are hidden from customer listings.",
+        example: '{"package_id":10}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Status toggled — response contains is_active: true/false)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Package not found / not owned by provider)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "The package must belong to the authenticated owner. Response includes package_id and the new is_active value."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'delete',
+        title: i++ + ' : Owner Package',
+        name: 'Delete Package',
+        meth: 'POST',
+        link: base_url + "owner/deletePackage",
+        mandatory: "package_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Soft-delete a package owned by the authenticated provider. The package is marked as deleted and will no longer appear in any listings.",
+        example: '{"package_id":10}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Package deleted successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 2 (Package not found / not owned by provider)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "The package must belong to the authenticated owner. This is a soft delete — the record is retained in the database with is_deleted = TRUE."
+    },
+
+    // ==================== OWNER EMPLOYEE APIs ====================
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'people',
+        title: i++ + ' : Owner Employee',
+        name: 'Get Employees',
+        meth: 'GET',
+        link: base_url + "owner/getEmployees",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns the list of all employees for the authenticated provider. Each employee includes their assigned services aggregated from the junction table.",
+        example: '',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success — returns array of employees)<br>2. HTTP_OK[200] - code : 2 (No employees found)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "No body required. Uses the token to identify the provider. Returns assigned_services as an array of objects with service_id."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'person',
+        title: i++ + ' : Owner Employee',
+        name: 'Get Employee Detail',
+        meth: 'POST',
+        link: base_url + "owner/getEmployeeDetail",
+        mandatory: "id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns full details of a single employee including their assigned services. The employee must belong to the authenticated provider.",
+        example: '{"id":5}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success — returns employee object)<br>2. HTTP_OK[200] - code : 0 (Employee not found / not owned by provider)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "id is the primary key (row ID) of the employee in tbl_provider_employees."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'person_add',
+        title: i++ + ' : Owner Employee',
+        name: 'Add Employee',
+        meth: 'POST',
+        link: base_url + "owner/addEmployee",
+        mandatory: "employee_first_name, employee_last_name",
+        optional: "employee_username, employee_id, email, phone_number, country_code, address, designation, profile_image, password, module_access, service_ids",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Creates a new employee linked to the authenticated provider. Services are assigned via the service_ids array. The password is stored hashed (bcrypt). module_access is a JSON object for controlling panel permissions.",
+        example: '{"employee_first_name":"John","employee_last_name":"Doe","employee_username":"john_doe","employee_id":"EMP001","email":"john@salon.com","phone_number":"0501234567","country_code":"+966","address":"123 Main St, Riyadh","designation":"Senior Stylist","profile_image":"https://cdn.example.com/emp1.jpg","password":"secure123","module_access":{"bookings":true,"reports":false},"service_ids":[1,2,3]}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Employee added successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error / duplicate username or employee_id)<br>3. HTTP_OK[200] - code : 0 (Invalid service_ids — not owned by provider)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "employee_username and employee_id must be unique within the same provider. service_ids must belong to the authenticated provider. password is optional but stored as bcrypt hash if provided. module_access example: {&quot;bookings&quot;: true, &quot;reports&quot;: false}."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'edit',
+        title: i++ + ' : Owner Employee',
+        name: 'Edit Employee',
+        meth: 'POST',
+        link: base_url + "owner/editEmployee",
+        mandatory: "id",
+        optional: "employee_first_name, employee_last_name, employee_username, employee_id, email, phone_number, country_code, address, designation, profile_image, password, module_access, service_ids",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Partial update — only fields included in the request body are changed. When service_ids is provided, all existing service assignments are replaced with the new array. The employee must belong to the authenticated provider.",
+        example: '{"id":5,"employee_first_name":"Jane","designation":"Master Stylist","service_ids":[2,4]}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Employee updated successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error / duplicate username or employee_id)<br>3. HTTP_OK[200] - code : 0 (Employee not found / not owned by provider)<br>4. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "id is the primary key of the employee. service_ids replaces ALL existing service assignments when provided — send an empty array [] to remove all. Omit service_ids entirely to leave assignments unchanged."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'toggle_on',
+        title: i++ + ' : Owner Employee',
+        name: 'Active / Inactive Employee',
+        meth: 'POST',
+        link: base_url + "owner/activeInactiveEmployee",
+        mandatory: "id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Toggles the is_active status of the employee. If currently active it will be deactivated, and vice versa. Inactive employees will not appear in booking assignment lists.",
+        example: '{"id":5}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Status toggled — response contains id and is_active: true/false)<br>2. HTTP_OK[200] - code : 0 (Employee not found / not owned by provider)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "id is the primary key of the employee. Response includes the new is_active value."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'delete',
+        title: i++ + ' : Owner Employee',
+        name: 'Delete Employee',
+        meth: 'POST',
+        link: base_url + "owner/deleteEmployee",
+        mandatory: "id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Soft-deletes an employee record. The employee is marked as deleted and will no longer appear in any listings or booking assignments.",
+        example: '{"id":5}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Employee deleted successfully)<br>2. HTTP_OK[200] - code : 0 (Employee not found / not owned by provider)<br>3. HTTP_OK[200] - code : 7 (Invalid or expired token)",
+        imp: "This is a soft delete — the record is retained in the database with is_deleted = TRUE. The employee must belong to the authenticated provider."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'event_available',
+        title: i++ + ' : Owner Availability',
+        name: 'Get Availability',
+        meth: 'GET',
+        link: base_url + "owner/getAvailability",
+        mandatory: "",
+        optional: "provider_user_id",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all non-deleted weekly availability slots. If provider_user_id is passed as a body parameter, returns that provider's availability; otherwise returns the authenticated provider's own availability.",
+        example: '{} or {"provider_user_id":45}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success)<br>2. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Response: { availability: [ { id, weekday, start_time, end_time, is_active } ] }. weekday: 0=Mon … 6=Sun. Times are in HH:MM:SS format. Pass provider_user_id as a body parameter to view another provider's availability."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'event_note',
+        title: i++ + ' : Owner Availability',
+        name: 'Set Availability (Bulk Upsert)',
+        meth: 'POST',
+        link: base_url + "owner/setAvailability",
+        mandatory: "days",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Single API to insert, update, or toggle availability for all days at once. Send all days together — existing slots for the same weekday are updated (times + is_active), new weekdays are inserted.",
+        example: '{"days":[{"weekday":0,"start_time":"09:00","end_time":"18:00","is_active":true},{"weekday":1,"start_time":"10:00","end_time":"17:00","is_active":false},{"weekday":5,"start_time":"10:00","end_time":"15:00"}]}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Availability set successfully)<br>2. HTTP_OK[200] - code : 0 (Validation error / start_time ≥ end_time)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "days is a required array (min 1 item). Each item: weekday (0–6, required), start_time and end_time in HH:MM (required), is_active boolean (optional, default true). start_time must be strictly before end_time. Pass is_active: false to disable a day without deleting it."
+    },
+    {
+        new_tag: '0',
+        color: 'indigo',
+        icon: 'event_busy',
+        title: i++ + ' : Owner Availability',
+        name: 'Delete Availability Day',
+        meth: 'POST',
+        link: base_url + "owner/deleteAvailabilityDay",
+        mandatory: "weekday",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Soft-delete a weekday availability slot. The slot will no longer appear in getAvailability.",
+        example: '{"weekday":6}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Slot deleted successfully)<br>2. HTTP_OK[200] - code : 0 (Slot not found / already deleted)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Soft delete — record is kept in DB with is_deleted = TRUE. Use setAvailability to re-create the slot later."
+    },
+
+
+    // ==================== OWNER COUPON APIs ====================
+    {
+        new_tag: '0',
+        color: 'orange darken-2',
+        icon: 'local_offer',
+        title: i++ + ' : Owner Coupon',
+        name: 'Get Coupons',
+        meth: 'GET',
+        link: base_url + "owner/getCoupons",
+        mandatory: "",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all coupon codes visible to the owner: their own provider-specific coupons and platform-wide admin coupons (provider_user_id = NULL). Results are ordered with owner coupons first, then admin coupons, each sorted newest first.",
+        example: '',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Returns coupons[])<br>2. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "is_admin_coupon = true means the coupon was created by admin and cannot be edited/deleted/toggled by the owner. Each coupon includes used_count for quick display."
+    },
+    {
+        new_tag: '0',
+        color: 'orange darken-2',
+        icon: 'loyalty',
+        title: i++ + ' : Owner Coupon',
+        name: 'Get Coupon Detail',
+        meth: 'POST',
+        link: base_url + "owner/getCouponDetail",
+        mandatory: "coupon_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns full details of a specific coupon along with usage statistics: total number of times used, total discount amount consumed across all bookings, and a customer-wise breakdown showing how much each customer used the coupon.",
+        example: '{"coupon_id":3}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Returns coupon + stats)<br>2. HTTP_OK[200] - code : 0 (coupon_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "stats object includes: total_times_used (from used_count), total_discount_consumed (sum of discount_amount from confirmed bookings), customer_usage[] (customer_id, name, email, phone, profile_image, times_used, discount_consumed, last_used_at). Owner can view their own coupons and admin coupons."
+    },
+    {
+        new_tag: '0',
+        color: 'orange darken-2',
+        icon: 'add_circle',
+        title: i++ + ' : Owner Coupon',
+        name: 'Create Coupon',
+        meth: 'POST',
+        link: base_url + "owner/createCoupon",
+        mandatory: "coupon_name, coupon_code, discount_value_type, discount_value",
+        optional: "min_order_amount, max_discount_amount, start_date, end_date, usage_limit_per_user, total_usage_limit, budget_limit, description",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Creates a new promo/coupon code linked to the authenticated owner. coupon_code is automatically uppercased and must be unique across the entire platform.",
+        example: '{"coupon_name":"Summer Sale","coupon_code":"SUMMER20","discount_value_type":"percentage","discount_value":20,"min_order_amount":100,"max_discount_amount":50,"start_date":"2025-06-01T00:00:00Z","end_date":"2025-06-30T23:59:59Z","usage_limit_per_user":1,"total_usage_limit":200,"budget_limit":5000,"description":"20% off all services this summer"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (coupon_created_successfully, returns coupon object)<br>2. HTTP_OK[200] - code : 0 (coupon_code_already_exists / validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "discount_value_type: 'flat' or 'percentage'. For percentage type, max_discount_amount acts as a cap on the computed discount. coupon_code is stored uppercase. Null limits mean unlimited usage."
+    },
+    {
+        new_tag: '0',
+        color: 'orange darken-2',
+        icon: 'edit',
+        title: i++ + ' : Owner Coupon',
+        name: 'Edit Coupon',
+        meth: 'POST',
+        link: base_url + "owner/editCoupon",
+        mandatory: "coupon_id",
+        optional: "coupon_name, coupon_code, discount_value_type, discount_value, min_order_amount, max_discount_amount, start_date, end_date, usage_limit_per_user, total_usage_limit, budget_limit, description",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Updates one or more fields of an existing coupon. Only the owner's own coupons can be edited — admin coupons (is_admin_coupon = true) will return coupon_not_found. Only the fields provided in the request body are updated (partial update).",
+        example: '{"coupon_id":3,"coupon_name":"Extended Summer Sale","end_date":"2025-07-15T23:59:59Z","total_usage_limit":300}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (coupon_updated_successfully, returns updated coupon)<br>2. HTTP_OK[200] - code : 0 (coupon_not_found / coupon_code_already_exists / no_fields_to_update / validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Partial update — only send the fields you want to change. To remove an optional value (e.g. end_date), send it as null. admin coupons (provider_user_id = NULL) cannot be edited by any owner."
+    },
+    {
+        new_tag: '0',
+        color: 'orange darken-2',
+        icon: 'toggle_on',
+        title: i++ + ' : Owner Coupon',
+        name: 'Active / Inactive Coupon',
+        meth: 'POST',
+        link: base_url + "owner/activeInactiveCoupon",
+        mandatory: "coupon_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Toggles the active/inactive status of the owner's own coupon. Each call flips the current state — no need to pass is_active. Inactive coupons will not appear in the customer's eligible coupons list and cannot be applied to new bookings.",
+        example: '{"coupon_id":3}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (coupon_activated_successfully / coupon_deactivated_successfully, returns is_active: bool)<br>2. HTTP_OK[200] - code : 0 (coupon_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Toggle — sends no is_active flag. Response includes is_active (the new state after toggle). Only owner-created coupons can be toggled; admin coupons return coupon_not_found."
+    },
+    {
+        new_tag: '0',
+        color: 'orange darken-2',
+        icon: 'delete',
+        title: i++ + ' : Owner Coupon',
+        name: 'Delete Coupon',
+        meth: 'POST',
+        link: base_url + "owner/deleteCoupon",
+        mandatory: "coupon_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Soft-deletes the owner's coupon. The coupon will no longer appear in any listing and cannot be applied by customers. Historical booking records that used the coupon are unaffected.",
+        example: '{"coupon_id":3}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (coupon_deleted_successfully)<br>2. HTTP_OK[200] - code : 0 (coupon_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Soft delete only — sets is_deleted = TRUE. Admin coupons cannot be deleted by owners. Existing bookings that applied this coupon are not affected."
+    },
+
+
+    // ==================== USER BOOKING — PHASE 1: DRAFT ====================
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'add_shopping_cart',
+        title: i++ + ' : User Booking',
+        name: 'Add Item to Draft',
+        meth: 'POST',
+        link: base_url + "user/booking/draft/addItem",
+        mandatory: "item_type, item_id",
+        optional: "provider_user_id, draft_id",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Adds a service, package, or add-on to a draft. item_type: 'service' | 'package' | 'addon'. For item_type='addon', item_id is the addon's id from tbl_service_addons — the parent service must already be in the draft. On the first call pass provider_user_id; on subsequent calls pass draft_id. Draft expires in 1 hour.",
+        example: '{"draft_id":7,"item_type":"addon","item_id":4}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Item added, returns full updated draft with items[] and pricing)<br>2. HTTP_OK[200] - code : 0 (provider_not_found / draft_not_found / draft_not_active / item_already_in_draft / service_not_found / package_not_found / addon_not_found / parent_service_not_in_draft)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Either provider_user_id OR draft_id must be sent. For addons: item_id = addon id (from tbl_service_addons); the addon's parent service must be present in the draft. Removing a service item automatically removes all its addons from the draft. Pricing response includes addon_total (sum of all addon rows) as a separate breakdown field."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'remove_shopping_cart',
+        title: i++ + ' : User Booking',
+        name: 'Remove Draft Item',
+        meth: 'POST',
+        link: base_url + "user/booking/draft/removeItem",
+        mandatory: "draft_id, draft_item_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Soft-deletes a single item from the draft. Pricing is recalculated. If no items remain, the draft status is set to 'expired'. Removing a service item automatically cascade-removes all of its addon items from the draft.",
+        example: '{"draft_id":7,"draft_item_id":23}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Item removed, returns updated draft)<br>2. HTTP_OK[200] - code : 0 (draft_not_found / draft_not_active / draft_item_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Cascade: removing a service row also soft-deletes all addon rows that belong to that service. If all items are removed, status becomes 'expired'. Can also be called directly on an addon row (draft_item_id of the addon item) to remove just that addon."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'receipt',
+        title: i++ + ' : User Booking',
+        name: 'Get Draft',
+        meth: 'POST',
+        link: base_url + "user/booking/getDraft",
+        mandatory: "",
+        optional: "draft_id, provider_user_id",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Fetches the complete current state of a booking draft. Pass either draft_id (direct lookup) or provider_user_id (finds the most recent active draft for the logged-in customer + that provider). At least one of the two must be provided.",
+        example: '{"draft_id":7}  OR  {"provider_user_id":12}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success, returns full draft with items, employee, schedule, pricing)<br>2. HTTP_OK[200] - code : 0 (draft_not_found / draft_id_or_provider_user_id_required)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Response includes: draft_id, status, expires_at, provider_user_id, items[], employee (if set), start_time, service_location_type, service_address, coupon_code, pricing { subtotal, addon_total, home_service_fee, discount_amount, vat_percentage, vat_amount, total_amount, currency }."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'person_off',
+        title: i++ + ' : User Booking',
+        name: 'Clear Employee from Draft (Back: Step 2 → Step 1)',
+        meth: 'POST',
+        link: base_url + "user/booking/draft/clearEmployee",
+        mandatory: "draft_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Called when user presses Back on the employee selection screen (Step 2) and returns to service selection (Step 1). Clears employee_id from the draft without touching items or pricing.",
+        example: '{"draft_id":7}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Employee cleared, returns updated draft)<br>2. HTTP_OK[200] - code : 0 (draft_not_found / draft_not_active)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Only clears employee_id — items, pricing, and all other draft fields remain unchanged."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'event_busy',
+        title: i++ + ' : User Booking',
+        name: 'Clear Schedule from Draft (Back: Step 3 → Step 2)',
+        meth: 'POST',
+        link: base_url + "user/booking/draft/clearSchedule",
+        mandatory: "draft_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Called when user presses Back on the date/time/address screen (Step 3) and returns to employee selection (Step 2). Clears start_time, end_time, service_location_type, service_address, service_latitude, service_longitude from the draft and recalculates pricing (home_service_fee is removed since location type is now NULL).",
+        example: '{"draft_id":7}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Schedule cleared, returns updated draft with recalculated pricing)<br>2. HTTP_OK[200] - code : 0 (draft_not_found / draft_not_active)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Clears all scheduling + location fields. Pricing is recalculated: since service_location_type becomes NULL, home_service_fee is dropped from the formula. Employee, items, and coupon are NOT affected."
+    },
+
+
+    // ==================== USER BOOKING — PHASE 2: EMPLOYEE ====================
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'people',
+        title: i++ + ' : User Booking',
+        name: 'Get Booking Employees',
+        meth: 'POST',
+        link: base_url + "user/booking/employees",
+        mandatory: "provider_user_id",
+        optional: "draft_id",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all active, non-blocked employees of a provider. If draft_id is provided, only returns employees who can perform ALL service-type items in the draft (checked via tbl_provider_employee_services).",
+        example: '{"provider_user_id":12,"draft_id":7}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Returns employees[])<br>2. HTTP_OK[200] - code : 0 (provider_id_required)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "When draft_id is provided: an employee is included only if they are mapped to EVERY service in the draft (not packages — packages do not restrict employee selection). Result is sorted by avg_rating DESC."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'person_pin',
+        title: i++ + ' : User Booking',
+        name: 'Set Draft Employee',
+        meth: 'POST',
+        link: base_url + "user/booking/draft/setEmployee",
+        mandatory: "draft_id, employee_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Assigns a specific employee to the booking draft. Employee must belong to the same provider as the draft.",
+        example: '{"draft_id":7,"employee_id":3}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Employee set, returns updated draft)<br>2. HTTP_OK[200] - code : 0 (draft_not_found / draft_not_active / employee_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Employee must be active, not blocked, and belong to the draft's provider_user_id."
+    },
+
+
+    // ==================== USER BOOKING — PHASE 3: SCHEDULE ====================
+    // {
+    //     new_tag: '0',
+    //     color: 'deep-purple',
+    //     icon: 'date_range',
+    //     title: i++ + ' : User Booking',
+    //     name: 'Get Provider Availability',
+    //     meth: 'POST',
+    //     link: base_url + "user/booking/availability",
+    //     mandatory: "provider_user_id",
+    //     optional: "month",
+    //     is_header: "YES",
+    //     is_push: "NO",
+    //     header: "api-key, token",
+    //     notes: "Returns the provider's weekly available days/times and already-booked slots for a given month. Used by the frontend to grey out unavailable calendar days and block already-taken time slots.",
+    //     example: '{"provider_user_id":12,"month":"2025-04"}',
+    //     status: "<br>1. HTTP_OK[200] - code : 1 (Returns available_days[], booked_slots[])<br>2. HTTP_OK[200] - code : 0 (provider_id_required)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+    //     imp: "available_days: [{weekday, start_time, end_time}] — weekday: 0=Mon…6=Sun. booked_slots: [{date, start_time, end_time}] for non-cancelled/rejected bookings in the requested month. month format: 'YYYY-MM'."
+    // },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'schedule',
+        title: i++ + ' : User Booking',
+        name: 'Set Draft Schedule',
+        meth: 'POST',
+        link: base_url + "user/booking/draft/setSchedule",
+        mandatory: "draft_id, start_time, service_location_type",
+        optional: "address_id, custom_address, custom_latitude, custom_longitude",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Sets date/time and service location on the draft. Validates start_time against provider availability. Calculates end_time from the sum of all service durations PLUS any selected add-on durations. Fetches home_service_fee and vat_percentage from admin settings and recalculates full pricing.",
+        example: '{"draft_id":7,"start_time":"2025-04-21T10:00:00+03:00","service_location_type":"home","address_id":5}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Schedule set, returns updated draft + full pricing breakdown)<br>2. HTTP_OK[200] - code : 0 (provider_not_available_on_this_day / time_outside_provider_availability / home_address_required / address_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "service_location_type: 'onsite' or 'home'. For 'home': provide address_id (saved address) OR custom_address. For 'onsite': no address needed — provider's business_address is used. Pricing formula: taxable = subtotal + addon_total + home_service_fee − discount; vat = taxable × vat%; total = taxable + vat. end_time = start_time + (sum of item_time_in_minutes) + (sum of addon_time_in_minutes)."
+    },
+
+
+    // ==================== USER BOOKING — PHASE 4: COUPONS ====================
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'local_offer',
+        title: i++ + ' : User Booking',
+        name: 'Get Available Coupons',
+        meth: 'POST',
+        link: base_url + "user/getCoupons",
+        mandatory: "provider_user_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns all coupons the authenticated user can apply for a given provider and subtotal. Filters by: active status, date range, minimum order amount, total usage limit, and per-user usage limit.",
+        example: '{"provider_user_id":12,"subtotal":200}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Returns eligible coupons[])<br>2. HTTP_OK[200] - code : 0 (Validation error)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Returns both provider-specific coupons (provider_user_id = X) and platform-wide coupons (provider_user_id = NULL). Coupons that have been used up to usage_limit_per_user by this user are excluded."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'card_giftcard',
+        title: i++ + ' : User Booking',
+        name: 'Apply Coupon to Draft',
+        meth: 'POST',
+        link: base_url + "user/booking/draft/applyCoupon",
+        mandatory: "draft_id, coupon_code",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Validates and applies a coupon code to the draft. Calculates discount_amount and recalculates total_amount. Coupon code is case-insensitive.",
+        example: '{"draft_id":7,"coupon_code":"SAVE20"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Coupon applied, returns updated pricing)<br>2. HTTP_OK[200] - code : 0 (coupon_invalid_or_expired / coupon_usage_limit_reached / draft_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Discount calculation: flat = discount_value; percentage = min(subtotal × rate/100, max_discount_amount). Updated pricing in response: { coupon_code, discount_amount, pricing: { subtotal, home_service_fee, discount_amount, vat_percentage, vat_amount, total_amount } }."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'remove_circle',
+        title: i++ + ' : User Booking',
+        name: 'Remove Coupon from Draft',
+        meth: 'POST',
+        link: base_url + "user/booking/draft/removeCoupon",
+        mandatory: "draft_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Removes the applied coupon from the draft and recalculates the total without discount.",
+        example: '{"draft_id":7}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Coupon removed, returns updated pricing)<br>2. HTTP_OK[200] - code : 0 (draft_not_found / draft_not_active)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: ""
+    },
+
+
+    // ==================== USER BOOKING — PHASE 5: PAYMENT ====================
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'payment',
+        title: i++ + ' : User Booking',
+        name: 'Initiate Payment',
+        meth: 'POST',
+        link: base_url + "user/booking/initiatePayment",
+        mandatory: "draft_id, payment_method",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "The most critical API. Validates draft completeness, calls Tap to AUTHORIZE (hold) the payment without capturing, creates tbl_bookings (with addon_total snapshot) + tbl_booking_items (services, packages, and addons all as rows with item_type) + tbl_payments, marks draft as 'converted', and notifies the owner.",
+        example: '{"draft_id":7,"payment_method":"card"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Booking created, returns booking_id, booking_number, status='pending', redirect_url)<br>2. HTTP_OK[200] - code : 0 (draft_expired / employee_not_selected / schedule_not_set / service_location_not_set / payment_authorization_failed)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "payment_method: 'card', 'apple_pay', 'stc_pay', 'wallet'. The Tap charge is an AUTHORIZATION (hold) not a capture — money is locked but not transferred until the owner accepts. If owner rejects, the authorization is voided automatically. Add-ons are stored as item_type='addon' rows in tbl_booking_items — no separate addon table. redirect_url is returned for 3DS card flows (may be null for wallet/stub mode)."
+    },
+
+
+    // ==================== USER BOOKING — PHASE 7: ARRIVAL OTP ====================
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'lock_open',
+        title: i++ + ' : User Booking',
+        name: 'Request Arrival OTP',
+        meth: 'POST',
+        link: base_url + "user/booking/requestArrivalOtp",
+        mandatory: "booking_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Generates a 6-digit OTP and sends it to the customer's email. Only available on the actual booking day when status is 'upcoming'. OTP expires in 30 minutes. Customer shares this OTP with the service provider when they arrive.",
+        example: '{"booking_id":101}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (OTP sent to email, returns expires_at)<br>2. HTTP_OK[200] - code : 0 (booking_not_found / booking_not_upcoming / otp_only_available_on_booking_day)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "OTP is only generatable on the booking date (today). OTP is 6 digits and expires in 30 minutes. For HOME bookings: customer shares OTP with the arriving provider. For ON-SITE: customer shows OTP at the salon. See /owner/booking/verifyArrivalOtp for the provider-side verification."
+    },
+
+
+    // ==================== USER BOOKING — PHASE 8: MY BOOKINGS ====================
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'list_alt',
+        title: i++ + ' : User Booking',
+        name: 'Get My Bookings',
+        meth: 'POST',
+        link: base_url + "user/getBookings",
+        mandatory: "",
+        optional: "status, page, limit",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns a paginated list of the authenticated user's bookings, with provider and employee info. Filter by status to show specific tabs (e.g. upcoming, completed).",
+        example: '{"status":"upcoming","page":1,"limit":10}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Returns bookings[], pagination)<br>2. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "status values: 'pending', 'upcoming', 'ongoing', 'completed', 'cancelled', 'rejected'. Omit status to get all bookings. Default: page=1, limit=10 (max 50)."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'assignment',
+        title: i++ + ' : User Booking',
+        name: 'Booking Summary',
+        meth: 'POST',
+        link: base_url + "user/summaryBooking",
+        mandatory: "booking_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Full booking summary for a single booking. Includes all items (each with their addons[]), provider details, employee details, and complete payment breakdown.",
+        example: '{"booking_id":101}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Full summary returned)<br>2. HTTP_OK[200] - code : 0 (booking_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Response shape: { booking_id, booking_number, status, start_time, end_time, service_location_type, service_address, items[] (each item has addons[]: [{id, addon_id, addon_name, addon_price, addon_time_in_minutes}]), provider: { business_name, address, phone, image }, employee: { name, designation, profile_image, avg_rating }, payment_summary: { subtotal, addon_total, home_service_fee, discount_amount, vat_percentage, vat_amount, total_amount, coupon_code, payment_method, payment_status, currency } }."
+    },
+
+
+    // ==================== USER BOOKING — PHASE 9: CANCEL ====================
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'cancel',
+        title: i++ + ' : User Booking',
+        name: 'Cancel Booking',
+        meth: 'POST',
+        link: base_url + "user/booking/cancel",
+        mandatory: "booking_id",
+        optional: "cancellation_reason",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Cancels a pending or upcoming booking. Applies cancellation fee policy (provider-level overrides admin settings). If payment was only authorized (held), the Tap authorization is voided (full release). If already captured (accepted by owner), a Tap refund is issued for refund_amount.",
+        example: '{"booking_id":101,"cancellation_reason":"Change of plans"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Cancelled, returns refund breakdown)<br>2. HTTP_OK[200] - code : 0 (booking_not_found / booking_cannot_be_cancelled)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Cancellation fee logic: if hours_until_booking >= cancel_free_hours → fee = 0 (full refund). Else: fee = total × cancel_fee_percentage/100. cancel_free_hours and cancel_fee_percentage are read from tbl_admin_settings (overrideable by tbl_cancellation_policies per provider). Response: { original_amount, cancellation_fee, refund_amount, refund_eligibility ('eligible'/'partial'/'not_eligible'), refund_method, refund_status, refund_timeline_days }."
+    },
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'account_balance_wallet',
+        title: i++ + ' : User Booking',
+        name: 'Get Refund Status',
+        meth: 'POST',
+        link: base_url + "user/booking/refundStatus",
+        mandatory: "booking_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns the current refund status and details for a cancelled booking from tbl_booking_cancellations.",
+        example: '{"booking_id":101}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Returns refund details)<br>2. HTTP_OK[200] - code : 0 (refund_record_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "refund_status values: 'pending', 'processing', 'completed', 'failed'. Response includes: refund_eligibility, refund_amount, cancellation_fee, original_amount, refund_method, refund_status, refund_timeline_days, refund_processed_at."
+    },
+
+
+    // ==================== USER BOOKING — PHASE 10: RESCHEDULE ====================
+    {
+        new_tag: '0',
+        color: 'deep-purple',
+        icon: 'event_note',
+        title: i++ + ' : User Booking',
+        name: 'Reschedule Request',
+        meth: 'POST',
+        link: base_url + "user/booking/rescheduleRequest",
+        mandatory: "booking_id, new_start_time",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Submits a reschedule request to the owner. Only allowed when booking status is 'upcoming'. Validates new_start_time against provider availability. Owner must approve/reject via /owner/booking/rescheduleRespond.",
+        example: '{"booking_id":101,"new_start_time":"2025-04-28T11:00:00+03:00"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Request submitted, returns reschedule_request_id)<br>2. HTTP_OK[200] - code : 0 (booking_not_found / booking_not_upcoming / reschedule_request_already_pending / provider_not_available_on_this_day / time_outside_provider_availability)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Only one pending reschedule request per booking is allowed at a time. new_start_time must be a valid ISO date string and must fall within the provider's availability window for that weekday. The booking is NOT rescheduled until the owner accepts."
+    },
+
+
+    // ==================== OWNER BOOKING — PHASE 6 ====================
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'event_available',
+        title: i++ + ' : Owner Booking',
+        name: 'Get Bookings',
+        meth: 'POST',
+        link: base_url + "owner/getBookings",
+        mandatory: "",
+        optional: "status, page, limit",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Returns a paginated list of bookings for the authenticated owner's provider profile. Includes customer details and assigned employee.",
+        example: '{"status":"pending","page":1,"limit":10}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Returns bookings[], pagination)<br>2. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "status values: 'pending', 'upcoming', 'ongoing', 'completed', 'cancelled', 'rejected'. Omit status to get all. Default: page=1, limit=10 (max 50). Results ordered by created_at DESC."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'how_to_reg',
+        title: i++ + ' : Owner Booking',
+        name: 'Accept / Reject Booking',
+        meth: 'POST',
+        link: base_url + "owner/booking/respond",
+        mandatory: "booking_id, action",
+        optional: "rejection_reason",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Owner accepts or rejects a pending booking. ACCEPT: captures the Tap authorization (transfers money to platform), sets booking status to 'upcoming', credits owner wallet, notifies customer + employee. REJECT: voids the Tap authorization (releases full amount to customer), sets status to 'rejected', notifies customer.",
+        example: '{"booking_id":101,"action":"accept"} or {"booking_id":101,"action":"reject","rejection_reason":"Provider unavailable"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success, returns booking_id, booking_number, new status)<br>2. HTTP_OK[200] - code : 0 (booking_not_found / booking_already_actioned / rejection_reason_required / payment_capture_failed / invalid_action)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "action must be 'accept' or 'reject'. rejection_reason is REQUIRED when action='reject'. Can only action bookings with status='pending'. On accept: Tap charge is captured (money transferred to platform) and owner wallet is credited. On reject: Tap authorization is voided (full amount released, no charge to customer)."
+    },
+
+
+    // ==================== OWNER BOOKING — PHASE 7: OTP & COMPLETION ====================
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'verified',
+        title: i++ + ' : Owner Booking',
+        name: 'Verify Arrival OTP',
+        meth: 'POST',
+        link: base_url + "owner/booking/verifyArrivalOtp",
+        mandatory: "booking_id, otp",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Employee/provider enters the 6-digit OTP received from the customer to confirm arrival. Sets arrival_otp_verified = true and updates booking status to 'ongoing'.",
+        example: '{"booking_id":101,"otp":"847291"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (OTP verified, status set to 'ongoing')<br>2. HTTP_OK[200] - code : 0 (booking_not_found / booking_not_upcoming / arrival_otp_not_requested / arrival_otp_expired / invalid_arrival_otp)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "OTP is 6 digits (exact). OTP expires in 30 minutes from when the customer requested it. The customer must first call /user/booking/requestArrivalOtp to generate the OTP before this API can be used."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'check_circle',
+        title: i++ + ' : Owner Booking',
+        name: 'Mark Booking Completed',
+        meth: 'POST',
+        link: base_url + "owner/booking/markCompleted",
+        mandatory: "booking_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Employee/provider marks the service as done. Requires booking status to be 'ongoing' and arrival_otp_verified to be true. Sends completion notification + email to customer and FCM to provider.",
+        example: '{"booking_id":101}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Booking marked completed)<br>2. HTTP_OK[200] - code : 0 (booking_not_found / booking_not_ongoing / arrival_otp_not_verified)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Booking must be in 'ongoing' status and arrival_otp_verified must be TRUE before this can be called. After completion, customer receives a rating prompt notification."
+    },
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'assignment_turned_in',
+        title: i++ + ' : Owner Booking',
+        name: 'Owner Booking Summary',
+        meth: 'POST',
+        link: base_url + "owner/booking/summary",
+        mandatory: "booking_id",
+        optional: "",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Full booking summary from the owner's perspective. Same structure as user's summaryBooking but includes customer contact info and arrival_otp_verified flag.",
+        example: '{"booking_id":101}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Full summary returned)<br>2. HTTP_OK[200] - code : 0 (booking_not_found)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "Response includes: booking_id, booking_number, status, start_time, end_time, service_location_type, service_address, arrival_otp_verified, owner_rejection_reason, items[] (each with addons[]), customer: { name, email, phone }, employee: { name, designation, profile_image }, payment_summary: { subtotal, addon_total, home_service_fee, discount_amount, vat_percentage, vat_amount, total_amount, coupon_code, payment_method, payment_status, currency }."
+    },
+
+
+    // ==================== OWNER BOOKING — PHASE 10: RESCHEDULE ====================
+    {
+        new_tag: '0',
+        color: 'teal',
+        icon: 'update',
+        title: i++ + ' : Owner Booking',
+        name: 'Respond to Reschedule Request',
+        meth: 'POST',
+        link: base_url + "owner/booking/rescheduleRespond",
+        mandatory: "reschedule_request_id, action",
+        optional: "rejection_reason",
+        is_header: "YES",
+        is_push: "NO",
+        header: "api-key, token",
+        notes: "Owner accepts or rejects a customer's reschedule request. ACCEPT: updates booking start_time and end_time to the new values (end_time recalculated to maintain same duration), notifies customer. REJECT: request status set to 'rejected', original schedule unchanged, customer notified.",
+        example: '{"reschedule_request_id":5,"action":"accept"} or {"reschedule_request_id":5,"action":"reject","rejection_reason":"Slot not available"}',
+        status: "<br>1. HTTP_OK[200] - code : 1 (Success, returns reschedule_request_id, booking_id, status, new_start_time or original_start_time)<br>2. HTTP_OK[200] - code : 0 (reschedule_request_not_found / reschedule_request_already_actioned / invalid_action)<br>3. HTTP_OK[200] - code : 7 (Invalid token)",
+        imp: "action must be 'accept' or 'reject'. Only pending reschedule requests can be actioned. On accept: booking times are updated atomically and the customer is notified of the new schedule. On reject: original times remain unchanged."
+    },
+]
+			})
+		})
+	</script>
+</body>
+
+</html>

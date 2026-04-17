@@ -1,0 +1,36 @@
+module.exports = {
+  invalid_api_key: 'مفتاح API غير صالح.',
+  token_invalid: 'تم رفض الوصول. الرمز غير صالح.',
+  permission_denied: 'ليس لديك صلاحية الوصول.',
+
+  success: 'تم بنجاح.',
+  failed: 'حدث خطأ ما. يرجى المحاولة مرة أخرى لاحقاً.',
+  failed_to_fetch: 'فشل في جلب التفاصيل.',
+  no_data: 'لا توجد بيانات.',
+  unsuccess: 'لم تنجح العملية.',
+
+  required: ':attr مطلوب.',
+  format: ':attr يجب أن يكون :value صالحاً.',
+  min_length: ':attr يجب أن يكون على الأقل :value أحرف.',
+
+  invalid_email_format: 'يرجى إدخال بريد إلكتروني صحيح.',
+  invalid_device_type: 'نوع الجهاز يجب أن يكون A أو I أو W.',
+  invalid_user_role: 'نوع المستخدم يجب أن يكون customer أو provider.',
+  otp_format: 'رمز OTP يجب أن يكون 6 أرقام.',
+  invalid_otp_action: 'الإجراء يجب أن يكون signup أو forgot.',
+
+  user_not_found: 'المستخدم غير موجود.',
+  invalid_user_id: 'معرف المستخدم غير صالح.',
+  user_already_exists: 'المستخدم موجود بالفعل.',
+  account_inactive: 'حسابك غير نشط. يرجى التواصل مع الدعم.',
+  login_invalid_credential: 'بيانات تسجيل الدخول غير صحيحة.',
+  not_verified_otp_sent: 'الحساب غير موثق. تم إرسال OTP بنجاح.',
+  signup_success_otp_sent: 'تم إنشاء الحساب وإرسال OTP للتوثيق.',
+  otp_resent: 'تم إعادة إرسال OTP بنجاح.',
+  forgot_password_otp_sent: 'تم إرسال OTP إلى بريدك لإعادة تعيين كلمة المرور.',
+  invalid_otp: 'OTP غير صالح أو منتهي الصلاحية.',
+  otp_verified: 'تم التحقق من OTP بنجاح.',
+  password_reset_success: 'تم إعادة تعيين كلمة المرور بنجاح.',
+  password_mismatch: 'كلمة المرور وتأكيد كلمة المرور غير متطابقين.',
+  logout_success: 'تم تسجيل الخروج بنجاح.',
+};

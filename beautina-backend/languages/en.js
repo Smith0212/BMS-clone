@@ -1,0 +1,47 @@
+module.exports = {
+  invalid_api_key: 'Invalid API key',
+  token_invalid: 'Access denied, invalid token provided.',
+  permission_denied: 'Permission denied.',
+
+  success: 'Success',
+  failed: 'Oops! Something went wrong. Please try again later.',
+  failed_to_fetch: 'Failed to fetch details.',
+  no_data: 'No data found.',
+  unsuccess: 'Unsuccessful.',
+
+  required: ':attr is required.',
+  format: ':attr must be a valid :value.',
+  min_length: ':attr must be at least :value characters.',
+  max_length: ':attr must be at most :value characters.',
+
+  invalid_email_format: 'Please enter a valid email address.',
+  invalid_device_type: 'Device Type must be one of A, I, or W.',
+  invalid_user_role: 'User Role must be customer or provider.',
+  otp_format: 'OTP must be 6 digits.',
+  invalid_otp_action: 'Action must be signup or forgot.',
+
+  user_not_found: 'User not found.',
+  invalid_user_id: 'Invalid User ID.',
+  user_already_exists: 'User already exists.',
+  account_inactive: 'Your account is inactive. Please contact support.',
+  login_invalid_credential: 'Invalid credentials.',
+  not_verified_otp_sent: 'Your account is not verified. OTP sent successfully.',
+  signup_success_otp_sent: 'Signup successful. OTP sent for verification.',
+  otp_resent: 'OTP resent successfully.',
+  forgot_password_otp_sent: 'OTP sent to your email for password reset.',
+  invalid_otp: 'Invalid or expired OTP.',
+  otp_verified: 'OTP verified successfully.',
+  password_reset_success: 'Password reset successfully.',
+  password_mismatch: 'Password and Confirm Password do not match.',
+  logout_success: 'Logout successful.',
+
+  // Owner-specific
+  owner_registration_incomplete: 'Please complete your registration to continue.',
+  owner_complete_step_1_first: 'Please complete your business information first.',
+  owner_complete_step_2_first: 'Please complete your financial information first.',
+  owner_account_under_review: 'Your account is under review. You can access it once approved.',
+  owner_account_rejected: 'Your account registration has been rejected.',
+  owner_account_not_approved: 'Your account has not been approved yet.',
+  owner_profile_already_submitted: 'Your profile has already been submitted and cannot be edited.',
+  owner_documents_submitted: 'Documents submitted successfully. Your account is under review.',
+};
