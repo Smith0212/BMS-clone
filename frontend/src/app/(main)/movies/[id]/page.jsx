@@ -67,7 +67,7 @@ export default async function MovieDetailPage({ params }) {
                             </div>
 
                             <Link
-                                href={`/movies/${id}/book`}
+                                href={`/movies/${id}#showtimes`}
                                 className="w-full md:w-48 text-center rounded-lg bg-primary-500 py-3 text-sm font-semibold text-white shadow-lg hover:bg-primary-600 transition-colors"
                             >
                                 Book Tickets
@@ -131,7 +131,7 @@ export default async function MovieDetailPage({ params }) {
             </div>
 
             {/* Showtimes Section */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 pt-10 border-t border-gray-800">
+            <div id="showtimes" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 pt-10 border-t border-gray-800">
                 <Showtimes
                     movieId={id}
                     movieTitle={movie.title}

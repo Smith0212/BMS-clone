@@ -15,8 +15,14 @@ export default function BookSeatsPage() {
     const [seatMap, setSeatMap]             = useState(null);
     const [loading, setLoading]             = useState(true);
     const [reserving, setReserving]         = useState(false);
+    const [mounted, setMounted]             = useState(false);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         if (!showInfo?.showtimeId) {
             router.replace('/movies');
             return;
@@ -32,7 +38,7 @@ export default function BookSeatsPage() {
             .catch(() => toast.error('Failed to connect to server'))
             .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [showInfo?.showtimeId]);
+    }, [showInfo?.showtimeId, mounted]);
 
     const handleProceed = async () => {
         if (selectedSeats.length === 0) {
@@ -73,7 +79,7 @@ export default function BookSeatsPage() {
         }
     };
 
-    if (!showInfo) return null;
+    if (!mounted || !showInfo) return null;
 
     return (
         <div className="w-full flex flex-col min-h-[calc(100vh-64px)] overflow-hidden">

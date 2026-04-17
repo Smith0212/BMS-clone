@@ -30,7 +30,7 @@ export default function MovieCard({ movie, genres = [] }) {
             </Link>
             <div className="p-3 pt-0 mt-auto">
                 <Link
-                    href={`/movies/${movie.id}/book`}
+                    href={`/movies/${movie.id}#showtimes`}
                     className="block w-full text-center rounded bg-gray-800 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-500 hover:text-white"
                 >
                     Book Now

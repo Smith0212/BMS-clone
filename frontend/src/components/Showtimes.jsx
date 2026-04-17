@@ -12,7 +12,7 @@ function to12h(timeStr) {
     const [h, m] = timeStr.split(':');
     const hour = parseInt(h, 10);
     const ampm = hour >= 12 ? 'PM' : 'AM';
-    const h12  = hour % 12 || 12;
+    const h12 = hour % 12 || 12;
     return `${h12}:${m} ${ampm}`;
 }
 
@@ -25,12 +25,12 @@ export default function Showtimes({ movieId, movieTitle, posterPath }) {
     const router = useRouter();
     const { setShow } = useBookingStore();
 
-    const [cities, setCities]               = useState([]);
-    const [cityId, setCityId]               = useState(null);
-    const [dateIdx, setDateIdx]             = useState(0);
-    const [theaters, setTheaters]           = useState([]);
-    const [loading, setLoading]             = useState(false);
-    const [expanded, setExpanded]           = useState({});
+    const [cities, setCities] = useState([]);
+    const [cityId, setCityId] = useState(null);
+    const [dateIdx, setDateIdx] = useState(0);
+    const [theaters, setTheaters] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [expanded, setExpanded] = useState({});
 
     // Load cities once
     useEffect(() => {
@@ -59,17 +59,17 @@ export default function Showtimes({ movieId, movieTitle, posterPath }) {
 
     const handlePick = (theater, showtime) => {
         setShow({
-            showtimeId:  showtime.showtime_id,
+            showtimeId: showtime.showtime_id,
             movieId,
             movieTitle,
             posterPath,
-            date:        DATES[dateIdx].date,
+            date: DATES[dateIdx].date,
             displayDate: DATES[dateIdx].display,
-            theater:     theater.theater_name,
-            address:     theater.address,
-            format:      showtime.show_format,
-            time:        to12h(showtime.show_time),
-            screenId:    showtime.screen_id,
+            theater: theater.theater_name,
+            address: theater.address,
+            format: showtime.show_format,
+            time: to12h(showtime.show_time),
+            screenId: showtime.screen_id,
         });
         router.push(`/movies/${movieId}/book`);
     };
@@ -87,11 +87,10 @@ export default function Showtimes({ movieId, movieTitle, posterPath }) {
                             <button
                                 key={c.id}
                                 onClick={() => setCityId(c.id)}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                                    cityId === c.id
+                                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${cityId === c.id
                                         ? 'bg-primary-500 border-primary-500 text-white'
                                         : 'border-gray-700 text-gray-400 hover:border-gray-500'
-                                }`}
+                                    }`}
                             >
                                 {c.name}
                             </button>
@@ -108,11 +107,10 @@ export default function Showtimes({ movieId, movieTitle, posterPath }) {
                         <button
                             key={d.date}
                             onClick={() => setDateIdx(i)}
-                            className={`flex-shrink-0 flex flex-col items-center px-6 py-3 rounded-lg border transition-all ${
-                                dateIdx === i
+                            className={`flex-shrink-0 flex flex-col items-center px-6 py-3 rounded-lg border transition-all ${dateIdx === i
                                     ? 'bg-primary-500 border-primary-500 text-white shadow-lg shadow-primary-500/20'
                                     : 'bg-gray-900 border-gray-800 text-gray-400 hover:bg-gray-800'
-                            }`}
+                                }`}
                         >
                             <span className="text-xs uppercase font-medium">{dow}</span>
                             <span className="text-lg font-bold">{day}</span>

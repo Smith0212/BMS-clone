@@ -59,7 +59,7 @@ export default function HeroSlider({ movies }) {
                                 {currentMovie.overview}
                             </p>
                             <Link
-                                href={`/movies/${currentMovie.id}/book`}
+                                href={`/movies/${currentMovie.id}#showtimes`}
                                 className="px-8 py-3 rounded-lg bg-primary-500 text-white font-semibold hover:bg-primary-600 transition-colors shadow-[0_4px_20px_rgba(229,9,20,0.4)]"
                             >
                                 Book Now

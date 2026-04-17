@@ -15,22 +15,28 @@ import { posterUrl } from '@/lib/tmdb';
 const cardSchema = z.object({
     cardNumber: z.string().min(19, 'Card must be 16 digits').max(19),
     cardHolder: z.string().min(3, 'Name must be at least 3 characters'),
-    expiry:     z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Invalid MM/YY format'),
-    cvv:        z.string().length(3, 'CVV must be 3 digits'),
+    expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Invalid MM/YY format'),
+    cvv: z.string().length(3, 'CVV must be 3 digits'),
 });
 
 const CONVENIENCE_FEE = 30;
 
 export default function PaymentPage() {
-    const router                      = useRouter();
-    const { data: session }           = useSession();
+    const router = useRouter();
+    const { data: session } = useSession();
     const { selectedSeats, showInfo, totalAmount } = useBookingStore();
-    const [activeTab, setActiveTab]   = useState('Card');
+    const [activeTab, setActiveTab] = useState('Card');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         if (!showInfo || selectedSeats.length === 0) router.replace('/');
-    }, [showInfo, selectedSeats, router]);
+    }, [showInfo, selectedSeats, router, mounted]);
 
     const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
         resolver: zodResolver(cardSchema),
@@ -42,10 +48,10 @@ export default function PaymentPage() {
         if (formatted !== cardNumber) setValue('cardNumber', formatted);
     }, [cardNumber, setValue]);
 
-    if (!showInfo) return null;
+    if (!mounted || !showInfo) return null;
 
     const convenienceFee = selectedSeats.length * CONVENIENCE_FEE;
-    const grandTotal     = totalAmount + convenienceFee;
+    const grandTotal = totalAmount + convenienceFee;
 
     const handlePayment = async () => {
         if (!session?.user?.backendToken) {
@@ -55,17 +61,17 @@ export default function PaymentPage() {
         }
 
         setIsProcessing(true);
-        const token   = session.user.backendToken;
+        const token = session.user.backendToken;
         const seatIds = selectedSeats.map((s) => s.id);
 
         try {
             // 1 — Initiate payment (creates a pending record)
             const initRes = await bmsApi.initiatePayment(
                 {
-                    showtime_id:    showInfo.showtimeId,
-                    seat_ids:       seatIds,
+                    showtime_id: showInfo.showtimeId,
+                    seat_ids: seatIds,
                     payment_method: activeTab.toLowerCase().replace(' ', '_'),
-                    amount:         grandTotal,
+                    amount: grandTotal,
                 },
                 token
             );
@@ -76,9 +82,9 @@ export default function PaymentPage() {
             // 2 — Process payment (dummy — always succeeds)
             const procRes = await bmsApi.processPayment(
                 {
-                    payment_id:   paymentId,
+                    payment_id: paymentId,
                     payment_meta: { method: activeTab, gateway: 'dummy' },
-                    should_fail:  false,
+                    should_fail: false,
                 },
                 token
             );
@@ -88,8 +94,8 @@ export default function PaymentPage() {
             const confRes = await bmsApi.confirmBooking(
                 {
                     showtime_id: showInfo.showtimeId,
-                    seat_ids:    seatIds,
-                    payment_id:  paymentId,
+                    seat_ids: seatIds,
+                    payment_id: paymentId,
                 },
                 token
             );
@@ -119,11 +125,10 @@ export default function PaymentPage() {
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`flex-1 min-w-[90px] text-sm font-medium py-2 px-3 rounded-md transition-colors ${
-                                    activeTab === tab
+                                className={`flex-1 min-w-[90px] text-sm font-medium py-2 px-3 rounded-md transition-colors ${activeTab === tab
                                         ? 'bg-primary-500 text-white shadow-md'
                                         : 'text-gray-400 hover:text-white'
-                                }`}
+                                    }`}
                             >
                                 {tab}
                             </button>
