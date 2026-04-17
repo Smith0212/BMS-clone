@@ -1,4 +1,4 @@
-const pool         = require('../../../../config/database');
+const pool = require('../../../../config/database');
 const responseCode = require('../../../../config/responseCode');
 
 const SHOW_TIMES = ['10:00', '13:00', '16:00', '19:00', '22:00'];
@@ -26,7 +26,7 @@ async function ensureShowtimesExist(tmdb_movie_id, movie_title, city_id) {
             WHERE th.city_id = $3
               AND scr.is_active = TRUE AND scr.is_deleted = FALSE
               AND th.is_active = TRUE AND th.is_deleted = FALSE
-            ON CONFLICT (screen_id, show_date, show_time) DO NOTHING
+            ON CONFLICT (screen_id, show_date, show_time, tmdb_movie_id) DO NOTHING
         `, [tmdb_movie_id, movie_title || 'Movie', city_id]);
 
         // Initialize showtime_seats for any new showtimes that don't have them
@@ -117,25 +117,25 @@ const showtime_model = {
             rows.forEach((row) => {
                 if (!theatersMap[row.theater_id]) {
                     theatersMap[row.theater_id] = {
-                        theater_id:   row.theater_id,
+                        theater_id: row.theater_id,
                         theater_name: row.theater_name,
-                        address:      row.address,
-                        amenities:    row.amenities,
-                        city_id:      row.city_id,
-                        city_name:    row.city_name,
-                        showtimes:    [],
+                        address: row.address,
+                        amenities: row.amenities,
+                        city_id: row.city_id,
+                        city_name: row.city_name,
+                        showtimes: [],
                     };
                 }
                 theatersMap[row.theater_id].showtimes.push({
-                    showtime_id:      row.showtime_id,
-                    screen_id:        row.screen_id,
-                    screen_name:      row.screen_name,
-                    screen_type:      row.screen_type,
-                    show_time:        row.show_time,
-                    show_format:      row.show_format,
-                    movie_language:   row.movie_language,
+                    showtime_id: row.showtime_id,
+                    screen_id: row.screen_id,
+                    screen_name: row.screen_name,
+                    screen_type: row.screen_type,
+                    show_time: row.show_time,
+                    show_format: row.show_format,
+                    movie_language: row.movie_language,
                     price_multiplier: row.price_multiplier,
-                    available_seats:  parseInt(row.available_seats),
+                    available_seats: parseInt(row.available_seats),
                 });
             });
 
@@ -230,11 +230,11 @@ const showtime_model = {
             rows.forEach((seat) => {
                 if (!rowsMap[seat.row_label]) rowsMap[seat.row_label] = [];
                 rowsMap[seat.row_label].push({
-                    seat_id:     seat.seat_id,
+                    seat_id: seat.seat_id,
                     seat_number: seat.seat_number,
-                    seat_type:   seat.seat_type,
-                    price:       parseFloat(seat.price),
-                    status:      seat.status,
+                    seat_type: seat.seat_type,
+                    price: parseFloat(seat.price),
+                    status: seat.status,
                 });
             });
 

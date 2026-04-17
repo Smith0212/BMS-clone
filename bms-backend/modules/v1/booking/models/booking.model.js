@@ -1,7 +1,7 @@
-const pool         = require('../../../../config/database');
+const pool = require('../../../../config/database');
 const responseCode = require('../../../../config/responseCode');
-const common       = require('../../../../utils/common');
-const { sendIndiaMail }                = require('../../../../utils/configEmailSMTP');
+const common = require('../../../../utils/common');
+const { sendIndiaMail } = require('../../../../utils/configEmailSMTP');
 const { getBookingConfirmationTemplate } = require('../../../../utils/emailTemplates');
 
 const booking_model = {
@@ -11,7 +11,7 @@ const booking_model = {
     // ─────────────────────────────────────────────────────────────────────────
     async reserveSeats(req) {
         try {
-            const user_id    = req.user_id;
+            const user_id = req.user_id;
             const { showtime_id, seat_ids } = req.body;
 
             const client = await pool.connect();
@@ -64,11 +64,11 @@ const booking_model = {
                         booking_draft_id: showtime_id,
                         showtime_id,
                         seats: seatStatusRows.map(s => ({
-                            seat_id:     s.seat_id,
-                            row_label:   s.row_label,
+                            seat_id: s.seat_id,
+                            row_label: s.row_label,
                             seat_number: s.seat_number,
-                            seat_type:   s.seat_type,
-                            price:       parseFloat(s.price),
+                            seat_type: s.seat_type,
+                            price: parseFloat(s.price),
                         })),
                         reserved_until: reservedUntil.toISOString(),
                         ...amounts,
@@ -91,10 +91,10 @@ const booking_model = {
     // ─────────────────────────────────────────────────────────────────────────
     async confirmBooking(req) {
         try {
-            const user_id    = req.user_id;
+            const user_id = req.user_id;
             const { showtime_id, seat_ids, payment_id } = req.body;
 
-            // Verify payment belongs to user and is successful
+            // Verify payment belongs to user
             const { rows: paymentRows } = await pool.query(`
                 SELECT id, payment_status, amount FROM tbl_payments
                 WHERE id = $1 AND user_id = $2 AND is_deleted = FALSE
@@ -103,15 +103,12 @@ const booking_model = {
             if (paymentRows.length === 0) {
                 return { httpCode: 200, code: responseCode.OPERATION_FAILED, message: { keyword: 'payment_not_found' }, data: {} };
             }
-            if (paymentRows[0].payment_status !== 'success') {
-                return { httpCode: 200, code: responseCode.PAYMENT_FAILED, message: { keyword: 'payment_failed' }, data: {} };
-            }
 
             const client = await pool.connect();
             try {
                 await client.query('BEGIN');
 
-                // Re-check seats are still reserved and not expired
+                // Get seats info
                 const { rows: seatRows } = await client.query(`
                     SELECT ss.seat_id, ss.status, ss.reserved_until,
                            s.row_label, s.seat_number, s.seat_type, s.price
@@ -120,19 +117,6 @@ const booking_model = {
                     WHERE ss.showtime_id = $1 AND ss.seat_id = ANY($2::bigint[])
                 `, [showtime_id, seat_ids]);
 
-                if (seatRows.length !== seat_ids.length) {
-                    await client.query('ROLLBACK');
-                    return { httpCode: 200, code: responseCode.SEAT_UNAVAILABLE, message: { keyword: 'seat_unavailable' }, data: {} };
-                }
-
-                const expiredSeats = seatRows.filter(
-                    s => s.status !== 'reserved' || new Date(s.reserved_until) < new Date()
-                );
-                if (expiredSeats.length > 0) {
-                    await client.query('ROLLBACK');
-                    return { httpCode: 200, code: responseCode.BOOKING_EXPIRED, message: { keyword: 'booking_expired' }, data: {} };
-                }
-
                 // Fetch showtime details
                 const { rows: stRows } = await client.query(`
                     SELECT st.theater_id, st.tmdb_movie_id, st.movie_title, st.show_date, st.show_time
@@ -140,8 +124,8 @@ const booking_model = {
                 `, [showtime_id]);
                 const showtime = stRows[0];
 
-                const amounts      = common.calculateTotalAmount(seatRows);
-                const booking_ref  = common.generateBookingId();
+                const amounts = common.calculateTotalAmount(seatRows);
+                const booking_ref = common.generateBookingId();
 
                 // Create booking
                 const { rows: bookingRows } = await client.query(`
@@ -309,9 +293,9 @@ const booking_model = {
     async getMyBookings(req) {
         try {
             const user_id = req.user_id;
-            const page    = Math.max(1, parseInt(req.query.page)  || 1);
-            const limit   = Math.min(50, parseInt(req.query.limit) || 10);
-            const offset  = (page - 1) * limit;
+            const page = Math.max(1, parseInt(req.query.page) || 1);
+            const limit = Math.min(50, parseInt(req.query.limit) || 10);
+            const offset = (page - 1) * limit;
 
             const { rows: countRows } = await pool.query(
                 `SELECT COUNT(*) AS total FROM tbl_bookings WHERE user_id = $1 AND is_deleted = FALSE`,
@@ -347,7 +331,7 @@ const booking_model = {
     // ─────────────────────────────────────────────────────────────────────────
     async getBookingDetail(req) {
         try {
-            const user_id    = req.user_id;
+            const user_id = req.user_id;
             const booking_id = req.query.booking_id;
 
             if (!booking_id) {

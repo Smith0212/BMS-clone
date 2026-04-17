@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS tbl_showtimes (
     is_deleted       BOOLEAN         NOT NULL DEFAULT FALSE,
     created_at       TIMESTAMPTZ     NOT NULL DEFAULT now(),
     updated_at       TIMESTAMPTZ     NOT NULL DEFAULT now(),
-    UNIQUE(screen_id, show_date, show_time)
+    UNIQUE(screen_id, show_date, show_time, tmdb_movie_id)
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────

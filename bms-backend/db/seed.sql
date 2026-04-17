@@ -120,7 +120,7 @@ CROSS JOIN (VALUES
     ('19:00'),
     ('22:00')
 ) AS t(show_time)
-ON CONFLICT (screen_id, show_date, show_time) DO NOTHING;
+ON CONFLICT (screen_id, show_date, show_time, tmdb_movie_id) DO NOTHING;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Showtime seats: initialize all (showtime × seat) as 'available'
